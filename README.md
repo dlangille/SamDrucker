@@ -1,4 +1,4 @@
- I have posted about this in the past, but this morning I feel very motivated
+I have posted about this in the past, but this morning I feel very motivated
 to have a centralized list of what packages are installed on each host.
 
 I know I can query the hosts, but having it centrally located means I can

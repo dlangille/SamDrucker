@@ -34,7 +34,7 @@ package_version_id
 
 Show me hosts with foo-1.2.3 installed.
 
-````
+```
 SELECT H.name
   FROM package P JOIN package_version PV ON P.name     = 'foo' 
                                         AND P.id       = PV.package_id

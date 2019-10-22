@@ -75,7 +75,7 @@ package_version_id
 
 ## Sample queries
 
-Show me hosts with foo-1.2.3 installed.
+Show me hosts with `foo-1.2.3` installed.
 
 ```
 SELECT H.name
@@ -87,7 +87,7 @@ SELECT H.name
   ORDER BY 1;
 ```
 
-Show me all packages installed on host bar
+Show me all packages installed on host `bar`
 
 ```
 SELECT P.name || '-' || PV.version

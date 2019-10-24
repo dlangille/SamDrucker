@@ -38,7 +38,8 @@ CREATE TABLE host (
   name    text not null,
   os      text not null,
   version text not null,
-  repo    text not null
+  repo    text not null,
+  UNIQUE (name)
 );
 
 CREATE TABLE package (

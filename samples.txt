@@ -1,0 +1,93 @@
+Here are some query samples I've been playing with.
+
+After inserting this data:
+
+```
+INSERT INTO incoming_packages (data) values (
+'{
+  "name": "foo.example.org",
+  "os": "FreeBSD",
+  "version": "12.0-RELEASE-p8",
+  "repo": "http://pkg.freebsd.org/FreeBSD:12:amd64/latest/",
+  "packages": {
+    "package": [
+      "apr-1.6.5.1.6.1_1",
+      [
+        "bacula9-client-9.4.3"
+      ],
+      [
+        "bash-5.0.7"
+      ]
+    ]
+  }
+}');
+```
+
+I can do this query:
+
+```
+samdrucker=# select id, data->'name' from incoming_packages;
+ id |     ?column?      
+----+-------------------
+  1 | "foo.example.org"
+(1 row)
+
+samdrucker=# 
+```
+
+Insert into host table:
+
+```
+INSERT INTO host (name, os, version, repo) 
+   SELECT data->'name', data->'os', data->'version', data->'repo'
+     FROM incoming_packages
+    WHERE id = 1;
+```
+
+View that data:
+
+```
+samdrucker=# SELECT * FROM host;
+ id |       name        |    os     |      version      |                       repo                        
+----+-------------------+-----------+-------------------+---------------------------------------------------
+  1 | "foo.example.org" | "FreeBSD" | "12.0-RELEASE-p8" | "http://pkg.freebsd.org/FreeBSD:12:amd64/latest/"
+(1 row)
+```
+
+See those "quotes"? That's part of the JSON.  That might be an issue on
+queries.
+
+If we do another insert, we get an error, as expected:
+
+```
+samdrucker=# INSERT INTO hoste (name, os, version, repo) 
+   SELECT data->'name', data->'os', data->'version', data->'repo'
+     FROM incoming_packages
+    WHERE id = 1;
+ERROR:  duplicate key value violates unique constraint "hoste_name_key"
+DETAIL:  Key (name)=("foo.example.org") already exists.
+samdrucker=# 
+```
+
+Instead, we can do an update
+
+```
+INSERT INTO host (name, os, version, repo) 
+   SELECT data->'name', data->'os', '12.0-RELEASE-p9', data->'repo'
+     FROM incoming_packages
+    WHERE id = 1
+  ON CONFLICT(name) 
+  DO UPDATE SET os      = EXCLUDED.os,
+                version = EXCLUDED.version,
+                repo    = EXCLUDED.repo;
+```
+
+Noticed how we have updated the version:
+
+```
+samdrucker=# SELECT * FROM host;
+ id |       name        |    os     |     version     |                       repo                        
+----+-------------------+-----------+-----------------+---------------------------------------------------
+  1 | "foo.example.org" | "FreeBSD" | 12.0-RELEASE-p9 | "http://pkg.freebsd.org/FreeBSD:12:amd64/latest/"
+(1 row)
+```

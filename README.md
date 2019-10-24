@@ -83,7 +83,7 @@ SELECT H.name
                                         AND P.id       = PV.package_id
                                         AND PV.version = '1.2.3'
                  JOIN host_package HP    ON PV.id      = HP.package_version_id
-                 JOIN host         H     ON PV.host_id = H.id
+                 JOIN host         H     ON HP.host_id = H.id
   ORDER BY 1;
 ```
 

@@ -91,3 +91,60 @@ samdrucker=# SELECT * FROM host;
   1 | "foo.example.org" | "FreeBSD" | 12.0-RELEASE-p9 | "http://pkg.freebsd.org/FreeBSD:12:amd64/latest/"
 (1 row)
 ```
+
+Inserting the packages
+
+1 - split package into name and version:
+    foo-1.2.3
+    split on the rightmost hypen.
+    Everything to the left is package name.
+    Everything to the right is version.
+
+    Try (.+)-[^-]+$
+
+INSERT INTO package (name) values ('apr')
+  ON CONFLICT(name)
+  DO NOTHING
+  RETURNING id;
+
+INSERT INTO package_version (package_id, version) values (1, '1.6.5.1.6.1_1')
+  ON CONFLICT(name)
+  DO NOTHING
+  RETURNING id;
+
+
+INSERT INTO host_packages (host_id, package_version_id) values(1, 1);
+
+
+Now the queries for output:
+
+What servers have this package installed?
+
+samdrucker=# SELECT H.name
+samdrucker-#   FROM package P JOIN package_version PV ON P.name     = 'apr' 
+samdrucker-#                                         AND P.id       = PV.package_id
+samdrucker-#                                         AND PV.version = '1.6.5.1.6.1_1'
+samdrucker-#                  JOIN host_package HP    ON PV.id      = HP.package_version_id
+samdrucker-#                  JOIN host         H     ON HP.host_id = H.id
+samdrucker-#   ORDER BY 1;
+       name        
+-------------------
+ "foo.example.org"
+(1 row)
+
+
+What packages are installed on this server:
+
+samdrucker=# SELECT P.name || '-' || PV.version
+samdrucker-#   FROM host H JOIN host_package    HP ON H.name                = '"foo.example.org"'
+samdrucker-#                                      AND H.id                  = HP.host_id
+samdrucker-#               JOIN package_version PV ON HP.package_version_id = PV.id
+samdrucker-#               JOIN package         P  ON PV.package_id         = P.id
+samdrucker-#   ORDER BY 1;
+     ?column?      
+-------------------
+ apr-1.6.5.1.6.1_1
+
+
+NOTE the "double quotes" around the host name. I think that is a JSON
+artifact and we need to remove it before saving.

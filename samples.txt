@@ -26,7 +26,7 @@ INSERT INTO incoming_packages (data) values (
 I can do this query:
 
 ```
-samdrucker=# select id, data->'name' from incoming_packages;
+samdrucker=# select id, data->>'name' from incoming_packages;
  id |     ?column?      
 ----+-------------------
   1 | "foo.example.org"
@@ -39,7 +39,7 @@ Insert into host table:
 
 ```
 INSERT INTO host (name, os, version, repo) 
-   SELECT data->'name', data->'os', data->'version', data->'repo'
+   SELECT data->>'name', data->>'os', data->>'version', data->>'repo'
      FROM incoming_packages
     WHERE id = 1;
 ```
@@ -61,7 +61,7 @@ If we do another insert, we get an error, as expected:
 
 ```
 samdrucker=# INSERT INTO hoste (name, os, version, repo) 
-   SELECT data->'name', data->'os', data->'version', data->'repo'
+   SELECT data->>'name', data->>'os', data->>'version', data->>'repo'
      FROM incoming_packages
     WHERE id = 1;
 ERROR:  duplicate key value violates unique constraint "hoste_name_key"
@@ -73,7 +73,7 @@ Instead, we can do an update
 
 ```
 INSERT INTO host (name, os, version, repo) 
-   SELECT data->'name', data->'os', '12.0-RELEASE-p9', data->'repo'
+   SELECT data->>'name', data->>'os', '12.0-RELEASE-p9', data->>'repo'
      FROM incoming_packages
     WHERE id = 1
   ON CONFLICT(name) 

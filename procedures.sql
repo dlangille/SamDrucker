@@ -32,3 +32,38 @@ SELECT H.name
                  JOIN host_package HP    ON PV.id      = HP.package_version_id
                  JOIN host         H     ON HP.host_id = H.id
 $$ LANGUAGE SQL STABLE;
+
+-- This will be the function which does it all. It takes JSON, and does all the inserts
+-- incoming_packages may not be a permanent table.  For now, it's there for having JSON
+-- I can work on.
+
+CREATE OR REPLACE FUNCTION HostAddPackages(json) returns INT AS $$
+DECLARE
+  a_json   ALIAS for $1;
+
+BEGIN
+  INSERT INTO incoming_packages (data) values (a_json);
+  RETURN 1;
+END
+$$ LANGUAGE plpgsql;
+
+
+-- example
+
+SELECT HostAddPackages('{
+  "name": "foo.example.org",
+  "os": "FreeBSD",
+  "version": "12.0-RELEASE-p8",
+  "repo": "http://pkg.freebsd.org/FreeBSD:12:amd64/latest/",
+  "packages": {
+    "package": [
+      "apr-1.6.5.1.6.1_1",
+      [
+        "bacula9-client-9.4.3"
+      ],
+      [
+        "bash-5.0.7"
+      ]
+    ]
+  }
+}');

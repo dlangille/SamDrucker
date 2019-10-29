@@ -97,3 +97,52 @@ SELECT P.name || '-' || PV.version
               JOIN package         P  ON HP.package_id         = P.id
   ORDER BY 1;
 ```
+
+## Query with functions
+
+There will be functions you can use instead of the SQL. Functions are the
+recommend access method.
+
+
+Where is `apr` installed?
+
+```
+# select * from HostsWithPackage('apr');
+ hostswithpackage 
+------------------
+ foo.example.org
+(1 row)
+```
+
+What is installed on `foo`?
+
+```
+samdrucker=# SELECT * FROM PackagesOnHost('foo.example.org');
+    packagesonhost    
+----------------------
+ apr-1.6.5.1.6.1_1
+ bacula9-client-9.4.3
+(2 rows)
+```
+
+This is how inserts and updates will be done:
+
+```
+SELECT HostAddPackages('{
+  "name": "foo.example.org",
+  "os": "FreeBSD",
+  "version": "12.0-RELEASE-p8",
+  "repo": "http://pkg.freebsd.org/FreeBSD:12:amd64/latest/",
+  "packages": {
+    "package": [
+      "apr-1.6.5.1.6.1_1",
+      [
+        "bacula9-client-9.4.3"
+      ],
+      [
+        "bash-5.0.7"
+      ]
+    ]
+  }
+}');
+```

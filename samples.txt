@@ -108,12 +108,30 @@ INSERT INTO package (name) values ('apr')
   RETURNING id;
 
 INSERT INTO package_version (package_id, version) values (1, '1.6.5.1.6.1_1')
+  ON CONFLICT ON CONSTRAINT package_version_package_id_version_key
+  DO NOTHING
+  RETURNING id;
+
+INSERT INTO host_package (host_id, package_version_id) values(1, 1);
+  ON CONFLICT ON CONSTRAINT host_package_host_id_package_version_id_key
+  DO NOTHING;
+
+
+INSERT INTO package (name) values ('bacula9-client')
   ON CONFLICT(name)
   DO NOTHING
   RETURNING id;
 
+INSERT INTO package_version (package_id, version) values (5, '9.4.3')
+  ON CONFLICT ON CONSTRAINT package_version_package_id_version_key
+  DO NOTHING
+  RETURNING id;
 
-INSERT INTO host_packages (host_id, package_version_id) values(1, 1);
+INSERT INTO host_package (host_id, package_version_id) values(7, 3)
+  ON CONFLICT ON CONSTRAINT host_package_host_id_package_version_id_key
+  DO NOTHING;
+
+
 
 
 Now the queries for output:
@@ -144,4 +162,13 @@ samdrucker-#   ORDER BY 1;
      ?column?      
 -------------------
  apr-1.6.5.1.6.1_1
+
+
+
+samdrucker=# SELECT * FROM PackagesOnHost('foo.example.org');
+    packagesonhost    
+----------------------
+ apr-1.6.5.1.6.1_1
+ bacula9-client-9.4.3
+(2 rows)
 

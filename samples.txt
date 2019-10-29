@@ -86,9 +86,9 @@ Noticed how we have updated the version:
 
 ```
 samdrucker=# SELECT * FROM host;
- id |       name        |    os     |     version     |                       repo                        
-----+-------------------+-----------+-----------------+---------------------------------------------------
-  1 | "foo.example.org" | "FreeBSD" | 12.0-RELEASE-p9 | "http://pkg.freebsd.org/FreeBSD:12:amd64/latest/"
+ id |       name      |   os    |     version     |                      repo                       
+----+-----------------+---------+-----------------+-------------------------------------------------
+  1 | foo.example.org | FreeBSD | 12.0-RELEASE-p9 | http://pkg.freebsd.org/FreeBSD:12:amd64/latest/
 (1 row)
 ```
 
@@ -127,9 +127,9 @@ samdrucker-#                                         AND PV.version = '1.6.5.1.6
 samdrucker-#                  JOIN host_package HP    ON PV.id      = HP.package_version_id
 samdrucker-#                  JOIN host         H     ON HP.host_id = H.id
 samdrucker-#   ORDER BY 1;
-       name        
--------------------
- "foo.example.org"
+      name       
+-----------------
+ foo.example.org
 (1 row)
 
 
@@ -145,6 +145,3 @@ samdrucker-#   ORDER BY 1;
 -------------------
  apr-1.6.5.1.6.1_1
 
-
-NOTE the "double quotes" around the host name. I think that is a JSON
-artifact and we need to remove it before saving.

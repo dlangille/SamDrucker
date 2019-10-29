@@ -130,14 +130,14 @@ INSERT INTO package_version (package_id, version) values (5, '9.4.3')
 INSERT INTO host_package (host_id, package_version_id) values(7, 3)
   ON CONFLICT ON CONSTRAINT host_package_host_id_package_version_id_key
   DO NOTHING;
-
-
+```
 
 
 Now the queries for output:
 
 What servers have this package installed?
 
+```
 samdrucker=# SELECT H.name
 samdrucker-#   FROM package P JOIN package_version PV ON P.name     = 'apr' 
 samdrucker-#                                         AND P.id       = PV.package_id
@@ -149,10 +149,22 @@ samdrucker-#   ORDER BY 1;
 -----------------
  foo.example.org
 (1 row)
+```
 
+Or by function:
+
+```
+# select * from HostsWithPackage('apr');
+ hostswithpackage 
+------------------
+ foo.example.org
+(1 row)
+```
+
+I think including the package version up there might be a good idea.
 
 What packages are installed on this server:
-
+```
 samdrucker=# SELECT P.name || '-' || PV.version
 samdrucker-#   FROM host H JOIN host_package    HP ON H.name                = '"foo.example.org"'
 samdrucker-#                                      AND H.id                  = HP.host_id
@@ -162,13 +174,38 @@ samdrucker-#   ORDER BY 1;
      ?column?      
 -------------------
  apr-1.6.5.1.6.1_1
+```
 
+Or using the function:
 
-
+```
 samdrucker=# SELECT * FROM PackagesOnHost('foo.example.org');
     packagesonhost    
 ----------------------
  apr-1.6.5.1.6.1_1
  bacula9-client-9.4.3
 (2 rows)
+```
 
+
+Eventually the way you can update the list of packages is like this:
+
+```
+SELECT HostAddPackages('{
+  "name": "foo.example.org",
+  "os": "FreeBSD",
+  "version": "12.0-RELEASE-p8",
+  "repo": "http://pkg.freebsd.org/FreeBSD:12:amd64/latest/",
+  "packages": {
+    "package": [
+      "apr-1.6.5.1.6.1_1",
+      [
+        "bacula9-client-9.4.3"
+      ],
+      [
+        "bash-5.0.7"
+      ]
+    ]
+  }
+}');
+```

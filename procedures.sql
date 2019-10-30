@@ -67,3 +67,77 @@ SELECT HostAddPackages('{
     ]
   }
 }');
+
+
+HostAddPackages() will be extended by using this pseudo code:
+
+
+-- save the host, get the id
+
+INSERT INTO host (name, os, version, repo) 
+   SELECT data->>'name', data->>'os', data->>'version', data->>'repo'
+     FROM incoming_packages
+    WHERE id = 7
+  ON CONFLICT(name) 
+  DO UPDATE SET os      = EXCLUDED.os,
+                version = EXCLUDED.version,
+                repo    = EXCLUDED.repo
+  RETURNING id;
+
+ id 
+----
+  7
+(1 row)
+
+INSERT 0 1
+
+
+hostid=13
+
+for package in $packages
+do
+  split package into name and version:
+    for example: sudo-1.8.28p1
+       split on the rightmost hypen.
+       Everything to the left is package name.
+       Everything to the right is version.
+
+       Try (.+)-[^-]+$
+
+  package='sudo'
+  version='1.8.28p1'
+
+  INSERT INTO package (name) values ('sudo')
+    ON CONFLICT(name)
+    DO NOTHING
+    RETURNING id;
+ id 
+----
+  6
+(1 row)
+
+INSERT 0 1
+
+
+  package_id=6
+
+  INSERT INTO package_version (package_id, version) values (6, '1.8.28p1')
+    ON CONFLICT ON CONSTRAINT package_version_package_id_version_key
+    DO NOTHING
+    RETURNING id;
+ id 
+----
+  7
+(1 row)
+
+INSERT 0 1
+
+  package_version_id=7
+
+  INSERT INTO host_package (host_id, package_version_id) values(13, 7)
+    ON CONFLICT ON CONSTRAINT host_package_host_id_package_version_id_key
+    DO NOTHING;
+
+done
+
+

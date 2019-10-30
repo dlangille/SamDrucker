@@ -13,6 +13,17 @@ You could get those tools to push the results to the web service.
 
 This repo is the start of that work.
 
+## What's next?
+
+These are the things I know need to be written. All are small pieces of
+code.
+
+1. web service which takes a post and invokes HostAddPackages()
+1. client script which constructs the JSON and posts it to the web service
+1. simple WEBUI to let you query the hosts and packages.
+
+Anyone is free to help write this stuff.
+
 ## JSON
 
 This is sample JSON which would be pushed to the service

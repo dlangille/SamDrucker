@@ -72,72 +72,69 @@ SELECT HostAddPackages('{
 HostAddPackages() will be extended by using this pseudo code:
 
 
+CREATE OR REPLACE FUNCTION HostAddPackages(json) returns INT AS $$
+DECLARE
+  a_json   ALIAS for $1;
+
+  l_incoming_packages_id integer;  
+  l_host_id              integer;
+  l_package              text;
+  l_package_name         text;
+  l_package_version      text;
+  l_package_id           integer;
+  l_package_version_id   integer;
+
+BEGIN
+-- save the data, just because we can
+    INSERT INTO incoming_packages (data) values (a_json)
+    RETURNING id
+    INTO l_incoming_packages_id;
+
 -- save the host, get the id
 
-INSERT INTO host (name, os, version, repo) 
-   SELECT data->>'name', data->>'os', data->>'version', data->>'repo'
-     FROM incoming_packages
-    WHERE id = 7
-  ON CONFLICT(name) 
-  DO UPDATE SET os      = EXCLUDED.os,
-                version = EXCLUDED.version,
-                repo    = EXCLUDED.repo
-  RETURNING id;
+  INSERT INTO host (name, os, version, repo) 
+    SELECT a_json->>'name', a_json->>'os', a_json->>'version', a_json->>'repo'
+    ON CONFLICT(name) 
+    DO UPDATE SET os      = EXCLUDED.os,
+                  version = EXCLUDED.version,
+                  repo    = EXCLUDED.repo
+    RETURNING id
+    INTO l_host_id;
 
- id 
-----
-  7
-(1 row)
+-- for package in $packages
 
-INSERT 0 1
+  FOR l_package IN SELECT * FROM json_array_elements_text(a_json->'packages')
+  LOOP
+--  split package into name and version:
+--  for example: sudo-1.8.28p1
+--     split on the rightmost hypen.
+--     Everything to the left is package name.
+--     Everything to the right is version.
 
+    SELECT substring(l_package, '(.+)-[^-]+$')
+    INTO l_package_name;
 
-hostid=13
+    SELECT substring(l_package, '.+-([^-]+)$')
+    INTO l_package_version;
 
-for package in $packages
-do
-  split package into name and version:
-    for example: sudo-1.8.28p1
-       split on the rightmost hypen.
-       Everything to the left is package name.
-       Everything to the right is version.
+    INSERT INTO package (name) values (l_package_name)
+      ON CONFLICT(name)
+      DO UPDATE SET name = EXCLUDED.name
+      RETURNING id
+      INTO l_package_id;
 
-       Try (.+)-[^-]+$
+    INSERT INTO package_version (package_id, version) values (l_package_id, l_package_version)
+      ON CONFLICT ON CONSTRAINT package_version_package_id_version_key
+      DO UPDATE SET version = EXCLUDED.version
+      RETURNING id
+      INTO l_package_version_id;
 
-  package='sudo'
-  version='1.8.28p1'
+    INSERT INTO host_package (host_id, package_version_id) values(l_host_id, l_package_version_id)
+      ON CONFLICT ON CONSTRAINT host_package_host_id_package_version_id_key
+      DO NOTHING;
 
-  INSERT INTO package (name) values ('sudo')
-    ON CONFLICT(name)
-    DO NOTHING
-    RETURNING id;
- id 
-----
-  6
-(1 row)
-
-INSERT 0 1
-
-
-  package_id=6
-
-  INSERT INTO package_version (package_id, version) values (6, '1.8.28p1')
-    ON CONFLICT ON CONSTRAINT package_version_package_id_version_key
-    DO NOTHING
-    RETURNING id;
- id 
-----
-  7
-(1 row)
-
-INSERT 0 1
-
-  package_version_id=7
-
-  INSERT INTO host_package (host_id, package_version_id) values(13, 7)
-    ON CONFLICT ON CONSTRAINT host_package_host_id_package_version_id_key
-    DO NOTHING;
-
-done
-
-
+  END LOOP;
+    
+  RETURN l_incoming_packages_id;
+END
+$$ LANGUAGE plpgsql;

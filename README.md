@@ -1,28 +1,50 @@
 # What is Sam Drucker?
 
-I have posted about this in the past. I feel very motivated
-to have a centralized list of what packages are installed on each host.
+SamDrucker is a collection of small components which create a centralized
+list of all packages on all hosts
 
-I know I can query the hosts, but having it centrally located means I can
-'instantly' identify all the hosts which have foo-1.03 installed.
+Each components is designed to be:
+
+* small
+* simple
+* easily written
+* flexiable
+* few, if any, dependencies
+
+## The components
+
+* client - collects the list of packages and posts it to the server
+* server - accepts the list of packages and adds it to the database
+* database - tables and stored procedures for the catalog of packages
+
+Each component can be written in whatever languages you want. Collect
+the packages in any manner you want. This can be done remotely on the host
+or centrally on a management tool, such as Ansible.
+
+Pick whatever languages you want.
+
+## Other ideas
 
 It was mentioned elsewhere that Ansible or Spacewalk can help here. I want
-something completely independent.
+something completely independent. These tools are great at collecting information.
 
-You could get those tools to push the results to the web service.
+I didn't want to use a large number of dependencies or huge packages.
 
-This repo is the start of that work.
+## Current status
 
-## What's next?
+A sample client and web service have been created as proof of concept.
+They are deployed in my home network, active on about 90 hosts.
 
-These are the things I know need to be written. All are small pieces of
-code.
+A database schema has been created for PostgreSQL, my database of personal
+choice, but this should work on any other database. Patches welcome here.
 
-1. web service which takes a post and invokes `HostAddPackages()`
-1. client script which constructs the JSON and posts it to the web service
-1. simple WEBUI to let you query the hosts and packages.
+## Next major step
 
-Anyone is free to help write this stuff.
+At present, queries of the database are possible only via command line tools
+
+I'd like to create a simple web interface.
+
+Anyone is weclome to help write this stuff.
 
 ## JSON
 

@@ -59,4 +59,4 @@ encoded=`/usr/local/bin/python -c "import urllib; print urllib.quote('''$payload
 
 #echo "$encoded"
 
-curl --silent --output /dev/null $SAMDRUCKER_URL$SAMDRUCKER_ARG=$encoded
+curl --output /dev/null  -d "$SAMDRUCKER_ARG=$payload" -H "Content-Type: application/x-www-form-urlencoded" -X POST $SAMDRUCKER_URL

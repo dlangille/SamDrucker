@@ -47,3 +47,6 @@ I'd like to create a simple web interface.
 Anyone is weclome to help write this stuff.
 
 
+## Wiki
+
+You can read more in [the wiki](https://github.com/dlangille/SamDrucker/wiki/SamDrucker).

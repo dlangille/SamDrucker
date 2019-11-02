@@ -13,6 +13,8 @@ $db = pg_connect("dbname=samdrucker host=pg02.example.org user=postie password=p
 
 echo '<br><br>SQL is:<br><br>';
 
+$result = pg_exec($db, 'BEGIN');
+
 $sql = 'SELECT HostAddPackages(' . pg_escape_literal($_REQUEST['packages']) . ')';
 
 echo $sql;
@@ -20,6 +22,8 @@ echo $sql;
 $result = pg_exec($db, $sql);
 
 echo $result;
+
+$result = pg_exec($db, 'COMMIT');
 
 pg_close($db);
 

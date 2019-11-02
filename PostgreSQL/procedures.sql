@@ -100,6 +100,11 @@ BEGIN
                   repo    = EXCLUDED.repo
     RETURNING id
     INTO l_host_id;
+    
+-- delete existing packages for this host
+
+  DELETE FROM host_package
+    WHERE host_id = l_host_id;
 
 -- for package in $packages
 

@@ -51,12 +51,4 @@ payload=`/usr/local/bin/jo -p name=$hostname os=$uname version=$version repo=$re
 
 #echo "$payload"
 
-# I tried but failed with this attempt
-#encoded=`echo "$payload" | php -R 'echo rawurlencode(fgets(STDIN));'`
-
-# So I went with python
-#encoded=`/usr/local/bin/python -c "import urllib; print urllib.quote('''$payload''')"`
-
-#echo "$encoded"
-
-curl --output /dev/null  -d "$SAMDRUCKER_ARG=$payload" -H "Content-Type: application/x-www-form-urlencoded" -X POST $SAMDRUCKER_URL
+curl -d "$SAMDRUCKER_ARG=$payload" -H "Content-Type: application/x-www-form-urlencoded" -X POST $SAMDRUCKER_URL

@@ -55,7 +55,7 @@ payload=`/usr/local/bin/jo -p name=$hostname os=$uname version=$version repo=$re
 #encoded=`echo "$payload" | php -R 'echo rawurlencode(fgets(STDIN));'`
 
 # So I went with python
-encoded=`/usr/local/bin/python -c "import urllib; print urllib.quote('''$payload''')"`
+#encoded=`/usr/local/bin/python -c "import urllib; print urllib.quote('''$payload''')"`
 
 #echo "$encoded"
 

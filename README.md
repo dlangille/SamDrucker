@@ -1,9 +1,9 @@
 # What is Sam Drucker?
 
 SamDrucker is a collection of small components which create a centralized
-list of all packages on all hosts
+list of all packages on all hosts.
 
-Each components is designed to be:
+Each component is designed to be:
 
 * small
 * simple

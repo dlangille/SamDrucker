@@ -1,31 +1,42 @@
 <pre>
 <?php
 
-#phpinfo();
+json_decode($_REQUEST['packages']);
+if (json_last_error() == JSON_ERROR_SYNTAX) {
+  syslog(LOG_ERR, 'invalid json: ' . $_REQUEST['packages']);
+  echo 'invalid JSON';
+  exit;
+}
 
-#echo urldecode($_SERVER['package']);
+$host     = 'pg02.int.unixathome.org';
+$port     = '5432';
+$db       = 'samdrucker';
+$user     = 'postie';
+$password = '[redacted]';
 
-echo 'Incoming data is:<br><br>';
+$dsn = "pgsql:host=$host;port=$port;dbname=$db;user=$user;password=$password;sslmode=require";
 
-echo $_REQUEST['packages'];
+try {
+  $dbh = new PDO($dsn);
 
-$db = pg_connect("dbname=samdrucker host=pg02.example.org user=postie password=password sslmode=require");
+  $dbh->beginTransaction();
+  $sql = 'SELECT HostAddPackages(:packages)';
 
-echo '<br><br>SQL is:<br><br>';
+  $stmt = $dbh->prepare($sql);
+  $stmt->bindValue(':packages', $_REQUEST['packages']);
 
-$result = pg_exec($db, 'BEGIN');
+  try {
+    $stmt->execute();
+  }  catch (PDOException $e){
+    echo $e->getMessage();
+  }
 
-$sql = 'SELECT HostAddPackages(' . pg_escape_literal($_REQUEST['packages']) . ')';
+  $dbh->commit();
 
-echo $sql;
-
-$result = pg_exec($db, $sql);
-
-echo $result;
-
-$result = pg_exec($db, 'COMMIT');
-
-pg_close($db);
+} catch (PDOException $e){
+ // report error message
+ syslog(LOG_ERR, $e->getMessage());
+}
 
 ?>
 

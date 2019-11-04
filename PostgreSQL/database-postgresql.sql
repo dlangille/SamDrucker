@@ -15,17 +15,11 @@ INSERT INTO incoming_packages (data) values (
   "os": "FreeBSD",
   "version": "12.0-RELEASE-p8",
   "repo": "http://pkg.freebsd.org/FreeBSD:12:amd64/latest/",
-  "packages": {
-    "package": [
-      "apr-1.6.5.1.6.1_1",
-      [
-        "bacula9-client-9.4.3"
-      ],
-      [
-        "bash-5.0.7"
-      ]
-    ]
-  }
+  "packages": [
+     "SamDruckerClientShell-0.0.0.2.2019110101",
+     "anvil-0.0.17",
+     "ap24-mod_fastcgi-2.4.7.1"
+     ]
 }');
 
 -- I am purposely not creating tables for os, version, and repo.

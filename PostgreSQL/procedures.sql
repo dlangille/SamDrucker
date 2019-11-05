@@ -37,13 +37,17 @@ $$ LANGUAGE SQL STABLE;
 -- incoming_packages may not be a permanent table.  For now, it's there for having JSON
 -- I can work on.
 
-CREATE OR REPLACE FUNCTION HostAddPackages(json) returns INT AS $$
+CREATE OR REPLACE FUNCTION HostAddPackages(a_json json) returns INT AS $$
 DECLARE
-  a_json   ALIAS for $1;
-
+  l_query  text;
+  l_id     integer;
 BEGIN
-  INSERT INTO incoming_packages (data) values (a_json);
-  RETURN 1;
+  l_query := 'INSERT INTO incoming_packages (data) values ($1) RETURNING id';
+  EXECUTE l_query
+    INTO l_id
+    USING a_json;
+
+  RETURN l_id;
 END
 $$ LANGUAGE plpgsql;
 
@@ -55,28 +59,21 @@ SELECT HostAddPackages('{
   "os": "FreeBSD",
   "version": "12.0-RELEASE-p8",
   "repo": "http://pkg.freebsd.org/FreeBSD:12:amd64/latest/",
-  "packages": {
-    "package": [
+  "packages": [
       "apr-1.6.5.1.6.1_1",
-      [
-        "bacula9-client-9.4.3"
-      ],
-      [
+        "bacula9-client-9.4.3",
         "bash-5.0.7"
-      ]
-    ]
-  }
+  ]
 }');
 
 
 HostAddPackages() will be extended by using this pseudo code:
 
 
-CREATE OR REPLACE FUNCTION HostAddPackages(json) returns INT AS $$
+CREATE OR REPLACE FUNCTION HostAddPackages(a_json json) returns INT AS $$
 DECLARE
-  a_json   ALIAS for $1;
-
-  l_incoming_packages_id integer;  
+  l_query                text;
+  l_incoming_packages_id integer;
   l_host_id              integer;
   l_package              text;
   l_package_name         text;
@@ -86,20 +83,24 @@ DECLARE
 
 BEGIN
 -- save the data, just because we can
-    INSERT INTO incoming_packages (data) values (a_json)
-    RETURNING id
-    INTO l_incoming_packages_id;
+  l_query := 'INSERT INTO incoming_packages (data) values ($1) RETURNING id';
+  EXECUTE l_query
+    INTO l_incoming_packages_id
+    USING a_json;
 
 -- save the host, get the id
 
-  INSERT INTO host (name, os, version, repo) 
-    SELECT a_json->>'name', a_json->>'os', a_json->>'version', a_json->>'repo'
-    ON CONFLICT(name) 
-    DO UPDATE SET os      = EXCLUDED.os,
-                  version = EXCLUDED.version,
-                  repo    = EXCLUDED.repo
-    RETURNING id
-    INTO l_host_id;
+  l_query := 'INSERT INTO host (name, os, version, repo) 
+               SELECT $1, $2, $3, $4
+               ON CONFLICT(name) 
+               DO UPDATE SET os      = EXCLUDED.os,
+                             version = EXCLUDED.version,
+                             repo    = EXCLUDED.repo
+               RETURNING id';
+
+  EXECUTE l_query
+    INTO l_host_id
+    USING a_json->>'name', a_json->>'os', a_json->>'version', a_json->>'repo';
     
 -- delete existing packages for this host
 
@@ -122,21 +123,30 @@ BEGIN
     SELECT substring(l_package, '.+-([^-]+)$')
     INTO l_package_version;
 
-    INSERT INTO package (name) values (l_package_name)
-      ON CONFLICT(name)
-      DO UPDATE SET name = EXCLUDED.name
-      RETURNING id
-      INTO l_package_id;
+    l_query := 'INSERT INTO package (name) values ($1)
+                 ON CONFLICT(name)
+                 DO UPDATE SET name = EXCLUDED.name
+                 RETURNING id';
 
-    INSERT INTO package_version (package_id, version) values (l_package_id, l_package_version)
-      ON CONFLICT ON CONSTRAINT package_version_package_id_version_key
-      DO UPDATE SET version = EXCLUDED.version
-      RETURNING id
-      INTO l_package_version_id;
+    EXECUTE l_query
+      INTO l_package_id
+      USING l_package_name;
 
-    INSERT INTO host_package (host_id, package_version_id) values(l_host_id, l_package_version_id)
-      ON CONFLICT ON CONSTRAINT host_package_host_id_package_version_id_key
-      DO NOTHING;
+    l_query := 'INSERT INTO package_version (package_id, version) values ($1, $2)
+                  ON CONFLICT ON CONSTRAINT package_version_package_id_version_key
+                  DO UPDATE SET version = EXCLUDED.version
+                  RETURNING id';
+
+    EXECUTE l_query
+       INTO l_package_version_id
+      USING l_package_id, l_package_version;
+
+    l_query := 'INSERT INTO host_package (host_id, package_version_id) values($1, $2)
+                   ON CONFLICT ON CONSTRAINT host_package_host_id_package_version_id_key
+                   DO NOTHING';
+
+    EXECUTE l_query
+      USING l_host_id, l_package_version_id;
 
   END LOOP;
     

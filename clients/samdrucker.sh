@@ -31,24 +31,27 @@ if [ -r /usr/local/etc/samdrucker/samdrucker.conf ]; then
   . /usr/local/etc/samdrucker/samdrucker.conf
 fi
 
+CURL="/usr/local/bin/curl"
+CURL_OPTIONS="--silent --output /dev/null"
+CUT="/usr/bin/cut"
+GREP="/usr/bin/grep"
+JO="/usr/local/bin/jo"
+PKG="/usr/sbin/pkg"
+
 # get list of packages on this host:
 
 pkg_args=""
-PKGS=`/usr/sbin/pkg info -q`
+PKGS=`$PKG info -q`
 for pkg in $PKGS
 do
   pkg_args="$pkg_args packages[]=$pkg"
 done
 
-#echo $pkg_args
-
 hostname=`hostname`
 uname=`uname`
 version=`uname -r`
-repo=`pkg -vv | grep url | cut -f2 -d \"`
+repo=`/usr/sbin/pkg -vv | $GREP  url | $CUT -f2 -d \"`
 
-payload=`/usr/local/bin/jo -p name=$hostname os=$uname version=$version repo=$repo $pkg_args`
+payload=`$JO -p name=$hostname os=$uname version=$version repo=$repo $pkg_args`
 
-#echo "$payload"
-
-curl --output /dev/null -d "$SAMDRUCKER_ARG=$payload" -H "Content-Type: application/x-www-form-urlencoded" -X POST $SAMDRUCKER_URL
+$CURL $CURL_OPTIONS -d "$SAMDRUCKER_ARG=$payload" -H "Content-Type: application/x-www-form-urlencoded" -X POST $SAMDRUCKER_URL

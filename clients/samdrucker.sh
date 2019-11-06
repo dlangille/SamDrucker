@@ -51,4 +51,4 @@ payload=`/usr/local/bin/jo -p name=$hostname os=$uname version=$version repo=$re
 
 #echo "$payload"
 
-curl -d "$SAMDRUCKER_ARG=$payload" -H "Content-Type: application/x-www-form-urlencoded" -X POST $SAMDRUCKER_URL
+curl --output /dev/null -d "$SAMDRUCKER_ARG=$payload" -H "Content-Type: application/x-www-form-urlencoded" -X POST $SAMDRUCKER_URL

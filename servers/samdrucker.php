@@ -1,4 +1,3 @@
-<pre>
 <?php
 
 json_decode($_REQUEST['packages']);
@@ -20,10 +19,11 @@ try {
   $dbh = new PDO($dsn);
 
   $dbh->beginTransaction();
-  $sql = 'SELECT HostAddPackages(:packages)';
+  $sql = 'SELECT HostAddPackages(:packages, :client_ip)';
 
   $stmt = $dbh->prepare($sql);
-  $stmt->bindValue(':packages', $_REQUEST['packages']);
+  $stmt->bindValue(':packages',  $_REQUEST['packages']);
+  $stmt->bindValue(':client_ip', $_SERVER['REMOTE_ADDR']);
 
   try {
     $stmt->execute();
@@ -37,7 +37,3 @@ try {
  // report error message
  syslog(LOG_ERR, $e->getMessage());
 }
-
-?>
-
-</pre>

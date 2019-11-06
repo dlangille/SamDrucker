@@ -37,15 +37,15 @@ $$ LANGUAGE SQL STABLE;
 -- incoming_packages may not be a permanent table.  For now, it's there for having JSON
 -- I can work on.
 
-CREATE OR REPLACE FUNCTION HostAddPackages(a_json json) returns INT AS $$
+CREATE OR REPLACE FUNCTION HostAddPackages(a_json json, a_client_ip cidr) returns INT AS $$
 DECLARE
   l_query  text;
   l_id     integer;
 BEGIN
-  l_query := 'INSERT INTO incoming_packages (data) values ($1) RETURNING id';
+  l_query := 'INSERT INTO incoming_packages (data, client_ip) values ($1, $2) RETURNING id';
   EXECUTE l_query
     INTO l_id
-    USING a_json;
+    USING a_json, a_client_ip;
 
   RETURN l_id;
 END
@@ -64,13 +64,13 @@ SELECT HostAddPackages('{
         "bacula9-client-9.4.3",
         "bash-5.0.7"
   ]
-}');
+}', '198.51.100.0');
 
 
 HostAddPackages() will be extended by using this pseudo code:
 
 
-CREATE OR REPLACE FUNCTION HostAddPackages(a_json json) returns INT AS $$
+CREATE OR REPLACE FUNCTION HostAddPackages(a_json json, a_client_ip cidr) returns INT AS $$
 DECLARE
   l_query                text;
   l_incoming_packages_id integer;
@@ -83,10 +83,10 @@ DECLARE
 
 BEGIN
 -- save the data, just because we can
-  l_query := 'INSERT INTO incoming_packages (data) values ($1) RETURNING id';
+  l_query := 'INSERT INTO incoming_packages (data, client_ip) values ($1, $2) RETURNING id';
   EXECUTE l_query
     INTO l_incoming_packages_id
-    USING a_json;
+    USING a_json, a_client_ip;
 
 -- save the host, get the id
 

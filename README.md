@@ -40,7 +40,7 @@ choice, but this should work on any other database. Patches welcome here.
 
 ## Next major step
 
-At present, queries of the database are possible only via command line tools
+At present, queries of the database are possible only via command line tools.
 
 I'd like to create a simple web interface.
 

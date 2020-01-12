@@ -52,6 +52,8 @@ uname=`uname`
 version=`uname -r`
 repo=`/usr/sbin/pkg -vv | $GREP  url | $CUT -f2 -d \"`
 
-payload=`$JO -p name=$hostname os=$uname version=$version repo=$repo $pkg_args`
+payload=$(mktemp /tmp/SamDrucker.payload.XXXXXX)
+$JO -p name=$hostname os=$uname version=$version repo=$repo $pkg_args > $payload
 
-$CURL $CURL_OPTIONS --data-urlencode "$SAMDRUCKER_ARG=$payload" -H "Content-Type: application/x-www-form-urlencoded" -X POST $SAMDRUCKER_URL
+$CURL $CURL_OPTIONS --data @${payload} -H "Content-Type: application/x-www-form-urlencoded" -X POST $SAMDRUCKER_URL
+$CURL --data-urlencode ${SAMDRUCKER_ARG}@${payload} $SAMDRUCKER_URL

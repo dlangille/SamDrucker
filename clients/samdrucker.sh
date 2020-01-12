@@ -54,4 +54,4 @@ repo=`/usr/sbin/pkg -vv | $GREP  url | $CUT -f2 -d \"`
 
 payload=`$JO -p name=$hostname os=$uname version=$version repo=$repo $pkg_args`
 
-$CURL $CURL_OPTIONS -d "$SAMDRUCKER_ARG=$payload" -H "Content-Type: application/x-www-form-urlencoded" -X POST $SAMDRUCKER_URL
+$CURL $CURL_OPTIONS --data-urlencode "$SAMDRUCKER_ARG=$payload" -H "Content-Type: application/x-www-form-urlencoded" -X POST $SAMDRUCKER_URL

@@ -52,6 +52,7 @@ uname=`uname`
 version=`uname -r`
 repo=`/usr/sbin/pkg -vv | $GREP  url | $CUT -f2 -d \"`
 
+# we save this to a file to avoid potential command line arguement overflow
 payload=$(mktemp /tmp/SamDrucker.payload.XXXXXX)
 $JO -p name=$hostname os=$uname version=$version repo=$repo $pkg_args > $payload
 

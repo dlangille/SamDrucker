@@ -1,7 +1,7 @@
 -- what packages are installed on this host
 -- SELECT * FROM PackagesOnHost('foo.example.org');
 
-CREATE OR REPLACE FUNCTION PackagesOnHost(text) returns SETOF text AS $$
+CREATE OR REPLACE FUNCTION PackagesOnHost(text) RETURNS SETOF text AS $$
   SELECT P.name || '-' || PV.version
     FROM host H JOIN host_package    HP ON H.name                = $1
                                        AND H.id                  = HP.host_id
@@ -12,7 +12,7 @@ $$ LANGUAGE SQL STABLE;
 -- which hosts have this package in this version installed
 -- select * from HostsWithPackage('apr', '1.6.5.1.6.1_1');
 
-CREATE OR REPLACE FUNCTION HostsWithPackage(text,text) returns SETOF text AS $$
+CREATE OR REPLACE FUNCTION HostsWithPackage(text,text) RETURNS SETOF text AS $$
 SELECT H.name
   FROM package P JOIN package_version PV ON P.name     = $1
                                         AND P.id       = PV.package_id
@@ -25,8 +25,20 @@ $$ LANGUAGE SQL STABLE;
 -- which hosts have this package. do not include version
 -- select * from HostsWithPackage('apr');
 
-CREATE OR REPLACE FUNCTION HostsWithPackage(text) returns SETOF text AS $$
+CREATE OR REPLACE FUNCTION HostsWithPackage(text) RETURNS SETOF text AS $$
 SELECT H.name
+  FROM package P JOIN package_version PV ON P.name     = $1
+                                        AND P.id       = PV.package_id
+                 JOIN host_package HP    ON PV.id      = HP.package_version_id
+                 JOIN host         H     ON HP.host_id = H.id
+$$ LANGUAGE SQL STABLE;
+
+-- which hosts have this package. do not include version
+-- select * from HostsWithPackage('apr');
+
+CREATE OR REPLACE FUNCTION HostsWithPackageShowVersion(text)
+  RETURNS TABLE(host text, package_version text) AS $$
+SELECT H.name, P.name || '-' || PV.version
   FROM package P JOIN package_version PV ON P.name     = $1
                                         AND P.id       = PV.package_id
                  JOIN host_package HP    ON PV.id      = HP.package_version_id
@@ -37,7 +49,7 @@ $$ LANGUAGE SQL STABLE;
 -- incoming_packages may not be a permanent table.  For now, it's there for having JSON
 -- I can work on.
 
-CREATE OR REPLACE FUNCTION HostAddPackages(a_json json, a_client_ip cidr) returns INT AS $$
+CREATE OR REPLACE FUNCTION HostAddPackages(a_json json, a_client_ip cidr) RETURNS INT AS $$
 DECLARE
   l_query  text;
   l_id     integer;
@@ -70,7 +82,7 @@ SELECT HostAddPackages('{
 HostAddPackages() will be extended by using this pseudo code:
 
 
-CREATE OR REPLACE FUNCTION HostAddPackages(a_json json, a_client_ip cidr) returns INT AS $$
+CREATE OR REPLACE FUNCTION HostAddPackages(a_json json, a_client_ip cidr) RETURNS INT AS $$
 DECLARE
   l_query                text;
   l_incoming_packages_id integer;

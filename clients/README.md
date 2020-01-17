@@ -13,4 +13,5 @@ The scripts and dependencies are listed below:
 `samdrucker.sh`
 
 * https://github.com/jpmens/jo - for constructing `JSON` from a shell
+* curl - for posting to the web server
 

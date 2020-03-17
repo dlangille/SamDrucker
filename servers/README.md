@@ -11,7 +11,7 @@ You can use whatever tools you want to create a server.
 
 The scripts and dependencies are listed below:
 
-`samdrucker.php`
+php - `samdrucker.php`
 
-* `php` - tested with php 7.2
+* `php` - tested with php 7.2 & 7.4
 * `php-pgsql` - for PostgreSQL database connection

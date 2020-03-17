@@ -49,4 +49,4 @@ Anyone is weclome to help write this stuff.
 
 ## Wiki
 
-You can read more in [the wiki](wiki).
+You can read more in [the wiki](https://github.com/dlangille/SamDrucker/wiki).

@@ -1,0 +1,59 @@
+#!/bin/sh
+
+# This script checks for any host which have not checked in during the past
+# 24 hours
+
+# arguments
+# * server   - IP address or hostname of the PostgreSQL database server
+# * database - database name
+# * user     - database user
+#
+# port is always the default value: 5432
+#
+# The password must be in ~.pgpass for the Unix user which runs this script.
+#
+# For Nagios, that defaults to ~nagios/.pgpass
+#
+# See https://www.postgresql.org/docs/12/libpq-pgpass.html
+#
+
+#
+# arguments used to create simple output of a single value
+# and to never issue a password prompt
+#
+psql="/usr/local/bin/psql --no-align --tuples-only --no-password "
+
+server=$1
+database=$2
+user=$3
+
+# we return zero, all good, by default
+result=0
+
+# the two database queries we will run
+query_date_updated="select name, date_updated from host where date_updated < now() - '24 hours'::interval;"
+
+# how is the host check in data?
+
+date_updated=`$psql -c "$query_date_updated" --host=$server $database $user`
+if [ $? == 0 ] ; then
+# uncomment for debugging
+#  echo all ok with date_updated query
+else
+  # when we hit an error, we do not care about the rest of the checks
+  echo error on dates query:$? $date_updated
+  exit 2
+fi
+
+# check the results
+
+if [ "$date_updated" != "" ] ; then
+  echo There are hosts not checked in: $date_updated
+  result=2
+fi
+
+if [ $result == 0 ] ; then
+  echo All hosts have checked in
+fi
+
+exit $result

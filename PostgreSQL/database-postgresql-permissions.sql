@@ -12,3 +12,8 @@ GRANT INSERT, SELECT, UPDATE         ON host              TO GROUP delivery;
 GRANT INSERT, SELECT, UPDATE         ON package           TO GROUP delivery;
 GRANT INSERT, SELECT, UPDATE         ON package_version   TO GROUP delivery;
 GRANT INSERT, SELECT, UPDATE, DELETE ON host_package      TO GROUP delivery;
+
+
+CREATE ROLE reporting NOLOGIN;
+
+GRANT SELECT ON host TO GROUP reporting;

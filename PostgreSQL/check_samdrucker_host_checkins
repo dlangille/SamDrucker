@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # This script checks for any host which have not checked in during the past
-# 24 hours
+# 25 hours
 
 # arguments
 # * server   - IP address or hostname of the PostgreSQL database server
@@ -31,7 +31,7 @@ user=$3
 result=0
 
 # the two database queries we will run
-query_date_updated="select name, date_updated from host where date_updated < now() - '24 hours'::interval;"
+query_date_updated="select name, date_updated from host where date_updated < now() - '25 hours'::interval;"
 
 # how is the host check in data?
 

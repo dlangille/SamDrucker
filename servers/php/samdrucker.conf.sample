@@ -1,0 +1,11 @@
+<?php
+
+#
+# make sure this file is not world readable
+#
+
+$host     = 'pg02.int.unixathome.org';
+$port     = '5432';
+$db       = 'samdrucker';
+$user     = 'postie';
+$password = '[redacted]';

@@ -1,0 +1,8 @@
+# the URL for your sam drucker server
+SAMDRUCKER_URL="https://samdrucker.vrt.sourcefire.com/samdrucker.php"
+
+# the argument expected by your sam drucker server script
+SAMDRUCKER_ARG="packages"
+
+# you might need --cacert for self-signed certs
+CURL_OPTIONS="--silent --output /dev/null"

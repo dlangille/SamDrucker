@@ -32,7 +32,6 @@ if [ -r /usr/local/etc/samdrucker/samdrucker.conf ]; then
 fi
 
 CURL="/usr/local/bin/curl"
-CURL_OPTIONS="--silent --output /dev/null"
 CUT="/usr/bin/cut"
 GREP="/usr/bin/grep"
 JO="/usr/local/bin/jo"

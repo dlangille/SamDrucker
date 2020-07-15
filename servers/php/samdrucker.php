@@ -1,6 +1,6 @@
 <?php
 
-define('CONF_FILE', '/usr/local/etc/samdrucker/samdrucker.conf');
+define('CONF_FILE', '/usr/local/etc/samdrucker/samdruckerserver.conf');
 
 if (file_exists(CONF_FILE)) {
   require_once(CONF_FILE);

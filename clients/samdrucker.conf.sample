@@ -1,5 +1,5 @@
 # the URL for your sam drucker server
-SAMDRUCKER_URL="https://samdrucker.vrt.sourcefire.com/samdrucker.php"
+SAMDRUCKER_URL="https://samdrucker.example.org/samdrucker.php"
 
 # the argument expected by your sam drucker server script
 SAMDRUCKER_ARG="packages"

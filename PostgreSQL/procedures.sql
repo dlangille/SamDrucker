@@ -1,48 +1,66 @@
 -- what packages are installed on this host
 -- SELECT * FROM PackagesOnHost('foo.example.org');
 
-CREATE OR REPLACE FUNCTION PackagesOnHost(text) RETURNS SETOF text AS $$
+CREATE OR REPLACE FUNCTION PackagesOnHost(text,boolean) RETURNS SETOF text AS $$
   SELECT P.name || '-' || PV.version
-    FROM host H JOIN host_package    HP ON H.name                = $1
+    FROM host H JOIN host_package    HP ON H.name                = $1 AND H.enabled = $2
                                        AND H.id                  = HP.host_id
                 JOIN package_version PV ON HP.package_version_id = PV.id
                 JOIN package         P  ON PV.package_id         = P.id
 $$ LANGUAGE SQL STABLE;
 
+CREATE OR REPLACE FUNCTION PackagesOnHost(text) RETURNS SETOF text AS $$
+  SELECT * FROM PackagesOnHost($1, true);
+$$ LANGUAGE SQL STABLE;
+
 -- which hosts have this package in this version installed
 -- select * from HostsWithPackage('apr', '1.6.5.1.6.1_1');
 
-CREATE OR REPLACE FUNCTION HostsWithPackage(text,text) RETURNS SETOF text AS $$
+CREATE OR REPLACE FUNCTION HostsWithPackage(text,text,boolean) RETURNS SETOF text AS $$
 SELECT H.name
   FROM package P JOIN package_version PV ON P.name     = $1
                                         AND P.id       = PV.package_id
                                         AND PV.version = $2
                  JOIN host_package HP    ON PV.id      = HP.package_version_id
-                 JOIN host         H     ON HP.host_id = H.id
+                 JOIN host         H     ON HP.host_id = H.id AND H.enabled = $3
+$$ LANGUAGE SQL STABLE;
+
+
+CREATE OR REPLACE FUNCTION HostsWithPackage(text,text) RETURNS SETOF text AS $$
+SELECT * FROM HostsWithPackage($1, $2, true)
 $$ LANGUAGE SQL STABLE;
 
 
 -- which hosts have this package. do not include version
 -- select * from HostsWithPackage('apr');
 
-CREATE OR REPLACE FUNCTION HostsWithPackage(text) RETURNS SETOF text AS $$
+CREATE OR REPLACE FUNCTION HostsWithPackage(text,boolean) RETURNS SETOF text AS $$
 SELECT H.name
   FROM package P JOIN package_version PV ON P.name     = $1
                                         AND P.id       = PV.package_id
                  JOIN host_package HP    ON PV.id      = HP.package_version_id
-                 JOIN host         H     ON HP.host_id = H.id
+                 JOIN host         H     ON HP.host_id = H.id AND H.enabled = $2
+$$ LANGUAGE SQL STABLE;
+
+CREATE OR REPLACE FUNCTION HostsWithPackage(text) RETURNS SETOF text AS $$
+SELECT * FROM HostsWithPackage($1, true)
 $$ LANGUAGE SQL STABLE;
 
 -- which hosts have this package. do not include version
 -- select * from HostsWithPackage('apr');
 
-CREATE OR REPLACE FUNCTION HostsWithPackageShowVersion(text)
+CREATE OR REPLACE FUNCTION HostsWithPackageShowVersion(text,boolean)
   RETURNS TABLE(host text, package_version text) AS $$
 SELECT H.name, P.name || '-' || PV.version
   FROM package P JOIN package_version PV ON P.name     = $1
                                         AND P.id       = PV.package_id
                  JOIN host_package HP    ON PV.id      = HP.package_version_id
-                 JOIN host         H     ON HP.host_id = H.id
+                 JOIN host         H     ON HP.host_id = H.id  AND H.enabled = $2
+$$ LANGUAGE SQL STABLE;
+
+CREATE OR REPLACE FUNCTION HostsWithPackageShowVersion(text)
+  RETURNS TABLE(host text, package_version text) AS $$
+SELECT * FROM HostsWithPackageShowVersion($1, true)
 $$ LANGUAGE SQL STABLE;
 
 -- This will be the function which does it all. It takes JSON, and does all the inserts
@@ -65,22 +83,20 @@ $$ LANGUAGE plpgsql;
 
 
 -- example
-
-SELECT HostAddPackages('{
-  "name": "foo.example.org",
-  "os": "FreeBSD",
-  "version": "12.0-RELEASE-p8",
-  "repo": "http://pkg.freebsd.org/FreeBSD:12:amd64/latest/",
-  "packages": [
-      "apr-1.6.5.1.6.1_1",
-        "bacula9-client-9.4.3",
-        "bash-5.0.7"
-  ]
-}', '198.51.100.0');
-
-
-HostAddPackages() will be extended by using this pseudo code:
-
+-- 
+-- SELECT HostAddPackages('{
+--   "name": "foo.example.org",
+--   "os": "FreeBSD",
+--   "version": "12.0-RELEASE-p8",
+--   "repo": "http://pkg.freebsd.org/FreeBSD:12:amd64/latest/",
+--   "packages": [
+--       "apr-1.6.5.1.6.1_1",
+--         "bacula9-client-9.4.3",
+--         "bash-5.0.7"
+--   ]
+-- }', '198.51.100.0');
+-- 
+-- 
 
 CREATE OR REPLACE FUNCTION HostAddPackages(a_json json, a_client_ip cidr) RETURNS INT AS $$
 DECLARE

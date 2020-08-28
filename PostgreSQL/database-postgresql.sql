@@ -37,6 +37,7 @@ CREATE TABLE host (
   version text NOT NULL,
   repo    text NOT NULL,
   date_updated timestamp without time zone NOT NULL default timezone('UTC'::text, now()),
+  enabled boolean NOT NULL DEFAULT true,
   UNIQUE (name)
 );
 

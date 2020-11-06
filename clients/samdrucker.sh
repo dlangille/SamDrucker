@@ -56,3 +56,6 @@ payload=$(mktemp /tmp/SamDrucker.payload.XXXXXX)
 $JO -p name=$hostname os=$uname version=$version repo=$repo $pkg_args > $payload
 
 $CURL $CURL_OPTIONS --data-urlencode ${SAMDRUCKER_ARG}@${payload} $SAMDRUCKER_URL
+
+# remove the temp file
+rm $payload

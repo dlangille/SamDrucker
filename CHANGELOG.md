@@ -15,6 +15,8 @@ When upgrading to this release, be sure to run these scripts:
 * `PostgreSQL/updates-2020.08.28.sql`
 * `PostgreSQL/procedures.sql`
 
+If you want to disable any hosts, this SQL will work:
+
 ```
 update host set enabled = false where name in ('foo', 'bar');
 ```

@@ -5,7 +5,7 @@
 Any changes to the `host` table with automatically update the `date_updated`
 field. See `update_date_updated` in `PostgreSQL/database-postgresql.sql`.
 
-## 2.4
+## 0.2.4
 
 With this release, you can set a host to be not enabled. Perhaps you have a
 host which is no longer in use but you want to keep the data.

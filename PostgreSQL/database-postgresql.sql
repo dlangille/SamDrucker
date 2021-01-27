@@ -51,7 +51,7 @@ BEGIN
 END
 $$ language 'plpgsql';
 
-  DROP TRIGGER update_host_date_updated ON update_host_date_updated;
+DROP TRIGGER IF EXISTS update_host_date_updated ON update_host_date_updated;
 CREATE TRIGGER update_host_date_updated
  BEFORE UPDATE ON host
  FOR EACH ROW EXECUTE PROCEDURE update_date_updated();

@@ -48,7 +48,7 @@ done
 
 hostname=`hostname`
 uname=`uname`
-version=`uname -r`
+version=`freebsd-version`
 repo=`/usr/sbin/pkg -vv | $GREP  url | $CUT -f2 -d \"`
 
 # we save this to a file to avoid potential command line arguement overflow

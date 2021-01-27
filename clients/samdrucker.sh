@@ -46,9 +46,9 @@ do
   pkg_args="$pkg_args packages[]=$pkg"
 done
 
-hostname=`hostname`
-uname=`uname`
-version=`freebsd-version`
+hostname=`/bin/hostname`
+uname=`/usr/bin/uname`
+version=`/bin/freebsd-version`
 repo=`/usr/sbin/pkg -vv | $GREP  url | $CUT -f2 -d \"`
 
 # we save this to a file to avoid potential command line arguement overflow

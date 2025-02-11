@@ -18,7 +18,7 @@
 #
 # I am using the FreeBSD textproc/jo:
 #
-# $ jo -p name=`hostname` os=`uname` version=`uname -r` repo=`pkg -vv | grep url | cut -f2 -d \"`
+# $ jo -p name=`hostname` os=`uname` version=`uname -r` repo=`pkg -vv | grep ' url' | cut -f2 -d \"`
 # {
 #    "name": "samdrucker.int.unixathome.org",
 #    "os": "FreeBSD",
@@ -49,7 +49,7 @@ done
 hostname=`/bin/hostname`
 uname=`/usr/bin/uname`
 version=`/bin/freebsd-version`
-repo=`/usr/sbin/pkg -vv | $GREP  url | $CUT -f2 -d \"`
+repo=`/usr/sbin/pkg -vv | $GREP  ' url' | $CUT -f2 -d \"`
 
 # we save this to a file to avoid potential command line arguement overflow
 payload=$(mktemp /tmp/SamDrucker.payload.XXXXXX)

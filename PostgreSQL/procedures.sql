@@ -63,24 +63,6 @@ CREATE OR REPLACE FUNCTION HostsWithPackageShowVersion(text)
 SELECT * FROM HostsWithPackageShowVersion($1, true)
 $$ LANGUAGE SQL STABLE;
 
--- This will be the function which does it all. It takes JSON, and does all the inserts
--- incoming_packages may not be a permanent table.  For now, it's there for having JSON
--- I can work on.
-
-CREATE OR REPLACE FUNCTION HostAddPackages(a_json json, a_client_ip cidr) RETURNS INT AS $$
-DECLARE
-  l_query  text;
-  l_id     integer;
-BEGIN
-  l_query := 'INSERT INTO incoming_packages (data, client_ip) values ($1, $2) RETURNING id';
-  EXECUTE l_query
-    INTO l_id
-    USING a_json, a_client_ip;
-
-  RETURN l_id;
-END
-$$ LANGUAGE plpgsql;
-
 
 -- example
 -- 

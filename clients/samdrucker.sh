@@ -27,8 +27,8 @@
 # }
 #
 
-if [ -r /usr/local/etc/samdrucker/samdrucker.conf ]; then
-  . /usr/local/etc/samdrucker/samdrucker.conf
+if [ -r /usr/local/etc/samdrucker/samdrucker-dev.conf ]; then
+  . /usr/local/etc/samdrucker/samdrucker-dev.conf
 fi
 
 CURL="/usr/local/bin/curl"
@@ -46,14 +46,24 @@ do
   pkg_args="$pkg_args packages[]=$pkg"
 done
 
-hostname=`/bin/hostname`
-uname=`/usr/bin/uname`
-version=`/bin/freebsd-version`
-repo=`/usr/sbin/pkg -vv | $GREP  ' url' | $CUT -f2 -d \"`
+hostname=$(/bin/hostname)
+uname=$(/usr/bin/uname)
+version=$(/bin/freebsd-version)
+
+repo_args=$(pkg repositories | ~/src/SamDrucker/scripts/repo-to-json.stdin)
+
+echo "and all that together is:"
+echo "$repo_args"
+
+echo "Done"
+
 
 # we save this to a file to avoid potential command line arguement overflow
 payload=$(mktemp /tmp/SamDrucker.payload.XXXXXX)
-$JO -p name=$hostname os=$uname version=$version repo=$repo $pkg_args > $payload
+
+$JO -p name=$hostname os=$uname version=$version repo="$repo_args" packages=$($JO -a $($PKG info -q | sort)) > $payload
+
+echo $payload
 
 $CURL $CURL_OPTIONS --data-urlencode ${SAMDRUCKER_ARG}@${payload} $SAMDRUCKER_URL
 

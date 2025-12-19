@@ -100,6 +100,8 @@ BEGIN
 
 -- save the host, get the id
 
+-- This is where I have to get a repo id to insert into the host table.
+
   l_query := 'INSERT INTO host (name, os, version, repo) 
                SELECT $1, $2, $3, $4
                ON CONFLICT(name) 

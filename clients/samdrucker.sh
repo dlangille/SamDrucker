@@ -36,6 +36,7 @@ CUT="/usr/bin/cut"
 GREP="/usr/bin/grep"
 JO="/usr/local/bin/jo"
 PKG="/usr/sbin/pkg"
+REPO2JSON="/usr/local/bin/samdrucker.repo-to-json.stdin"
 
 # get list of packages on this host:
 
@@ -50,20 +51,12 @@ hostname=$(/bin/hostname)
 uname=$(/usr/bin/uname)
 version=$(/bin/freebsd-version)
 
-repo_args=$(pkg repositories | ~/src/SamDrucker/scripts/repo-to-json.stdin)
-
-echo "and all that together is:"
-echo "$repo_args"
-
-echo "Done"
-
+repo_args=$(pkg repositories | ${samdrucker.repo-to-json.stdin})
 
 # we save this to a file to avoid potential command line arguement overflow
 payload=$(mktemp /tmp/SamDrucker.payload.XXXXXX)
 
 $JO -p name=$hostname os=$uname version=$version repo="$repo_args" packages=$($JO -a $($PKG info -q | sort)) > $payload
-
-echo $payload
 
 $CURL $CURL_OPTIONS --data-urlencode ${SAMDRUCKER_ARG}@${payload} $SAMDRUCKER_URL
 

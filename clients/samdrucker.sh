@@ -51,7 +51,7 @@ hostname=$(/bin/hostname)
 uname=$(/usr/bin/uname)
 version=$(/bin/freebsd-version)
 
-repo_args=$(pkg repositories | ${samdrucker.repo-to-json.stdin})
+repo_args=$(pkg repositories | ${REPO2JSON})
 
 # we save this to a file to avoid potential command line arguement overflow
 payload=$(mktemp /tmp/SamDrucker.payload.XXXXXX)

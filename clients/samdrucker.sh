@@ -27,8 +27,8 @@
 # }
 #
 
-if [ -r /usr/local/etc/samdrucker/samdrucker-dev.conf ]; then
-  . /usr/local/etc/samdrucker/samdrucker-dev.conf
+if [ -r /usr/local/etc/samdrucker/samdrucker.conf ]; then
+  . /usr/local/etc/samdrucker/samdrucker.conf
 fi
 
 CURL="/usr/local/bin/curl"

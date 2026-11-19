@@ -5,4 +5,6 @@ SAMDRUCKER_URL="https://samdrucker.example.org/samdrucker.php"
 SAMDRUCKER_ARG="packages"
 
 # you might need --cacert for self-signed certs
-CURL_OPTIONS="--silent --output /dev/null"
+# Do not add --output: samdrucker.sh reads the server's reply to tell
+# whether the check-in worked, and removes any --output it finds here.
+CURL_OPTIONS="--silent"

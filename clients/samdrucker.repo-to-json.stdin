@@ -2,7 +2,8 @@
 
 -- Obtained from dch
 
--- usage - chmod, then `pkg repositories | repos.flua`
+-- Converts the UCL printed by `pkg repos` into JSON, for samdrucker.sh.
+-- usage: pkg repos -e | samdrucker.repo-to-json.stdin
 
 local ucl = require("ucl")
 local parser = ucl.parser()

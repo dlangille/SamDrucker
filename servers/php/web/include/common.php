@@ -144,11 +144,11 @@ function page_footer(): void {
 <?php
 }
 
-# Exports. Every page with a result table accepts ?format=csv or
-# ?format=json, together with its usual parameters, and sends that table
-# as a file to save instead of the HTML page.
+# Exports. Every page with a result table accepts ?format=csv, ?format=tsv
+# or ?format=json, together with its usual parameters, and sends that
+# table as a file to save instead of the HTML page.
 
-const EXPORT_FORMATS = ['csv', 'json'];
+const EXPORT_FORMATS = ['csv', 'tsv', 'json'];
 
 # The export format asked for, or null for the normal HTML page.
 function export_format(): ?string {
@@ -156,7 +156,7 @@ function export_format(): ?string {
   return in_array($f, EXPORT_FORMATS, true) ? $f : null;
 }
 
-# Links to the current page, with the same parameters, as CSV and as JSON.
+# Links to the current page, with the same parameters, in each format.
 function export_links(): string {
   $links = [];
   foreach (EXPORT_FORMATS as $f) {
@@ -169,7 +169,8 @@ function export_links(): string {
 
 # A spreadsheet treats a cell starting with = + - @ (or tab or CR) as a
 # formula. Hosts can post any text they like, so such values get a leading
-# apostrophe in CSV, which makes the spreadsheet show them as plain text.
+# apostrophe in CSV and TSV, which makes the spreadsheet show them as
+# plain text.
 function csv_safe(mixed $v): mixed {
   if (is_bool($v)) {
     return $v ? 'true' : 'false';
@@ -194,7 +195,7 @@ function export(string $basename, array $columns, array $rows): never {
   $out = [];
   foreach ($rows as $r) {
     $o = [];
-    # CSV and JSON use the same names: the headings
+    # every format uses the same names: the headings
     foreach ($columns as $key => $heading) {
       $o[$heading] = $r[$key] ?? null;
     }
@@ -204,6 +205,16 @@ function export(string $basename, array $columns, array $rows): never {
   if ($format === 'json') {
     header('Content-Type: application/json; charset=UTF-8');
     echo json_encode($out, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), "\n";
+  } else if ($format === 'tsv') {
+    # Tab-separated values have no quoting, so a tab or line break inside
+    # a value would split it; each becomes a space.
+    header('Content-Type: text/tab-separated-values; charset=UTF-8');
+    $line = fn(array $values): string =>
+      implode("\t", array_map(fn($v) => str_replace(["\t", "\r", "\n"], ' ', (string) $v), $values)) . "\n";
+    echo $line(array_values($columns));
+    foreach ($out as $o) {
+      echo $line(array_map('csv_safe', array_values($o)));
+    }
   } else {
     header('Content-Type: text/csv; charset=UTF-8');
     $fh = fopen('php://output', 'w');

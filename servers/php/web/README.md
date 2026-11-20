@@ -17,15 +17,18 @@ Pages showing hosts can include disabled hosts with `all=1`.
 
 ## Downloading results
 
-Every result table has **Download: CSV JSON** links. They fetch the same
-page with `format=csv` or `format=json` added, so the file holds exactly
+Every result table has **Download: CSV TSV JSON** links. They fetch the
+same page with `format=csv`, `format=tsv` or `format=json` added, so the
+file holds exactly
 the rows on the page, with the same search and `all=1` setting. Files are
 named after the page and the UTC time, for example
 `hosts-with-php85-20261120T153000Z.csv`.
 
-In CSV, a value starting with `=`, `+`, `-`, `@`, tab or carriage return
-gets a leading `'`, so a spreadsheet shows it as text instead of running it
-as a formula. JSON is never changed.
+TSV has no quoting, so a tab or line break inside a value becomes a space.
+
+In CSV and TSV, a value starting with `=`, `+`, `-`, `@`, tab or carriage
+return gets a leading `'`, so a spreadsheet shows it as text instead of
+running it as a formula. JSON is never changed.
 
 ## Requirements
 

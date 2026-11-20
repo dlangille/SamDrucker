@@ -108,7 +108,22 @@ table.sortable th { position: relative; }
   cursor: col-resize;
   touch-action: none;
 }
-.column-resize:hover, .column-resize.active { background: var(--link); opacity: 0.5; }
+/* a visible divider, so viewers can see there is something to drag */
+.column-resize::after {
+  content: "";
+  position: absolute;
+  top: 20%;
+  bottom: 20%;
+  right: 2px;
+  border-right: 2px solid var(--muted);
+  opacity: 0.6;
+}
+.column-resize:hover::after, .column-resize.active::after {
+  top: 0;
+  bottom: 0;
+  border-right-color: var(--link);
+  opacity: 1;
+}
 table.fixed-columns { table-layout: fixed; }
 table.fixed-columns th, table.fixed-columns td {
   overflow: hidden;

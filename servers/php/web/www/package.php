@@ -50,6 +50,26 @@ foreach ($hosts as $r) {
 }
 uksort($versions, fn($a, $b) => pkg_version_cmp((string) $b, (string) $a));
 
+# A version typed without an epoch (1.30.7 rather than 1.30.7,3) has
+# epoch 0, and pkg compares epochs first, so every installed version with
+# an epoch counts as newer and the filter shows nothing. That is never
+# what anyone means. When every installed version of this package has the
+# same epoch, assume it, and say so. When they differ, do not guess:
+# explain, and offer the choices.
+$epoch_note = '';
+$epoch_choices = [];
+if ($older_than !== '' && !str_contains($older_than, ',')) {
+  $epochs = array_unique(array_map(fn($v) => pkg_version_split((string) $v)[2], array_keys($versions)));
+  sort($epochs);
+  if (count($epochs) === 1 && $epochs[0] > 0) {
+    $epoch_note = "$older_than has no epoch; every installed $name has epoch $epochs[0], "
+                . "so this compares against $older_than,$epochs[0].";
+    $older_than .= ',' . $epochs[0];
+  } elseif (count(array_filter($epochs)) > 0) {
+    $epoch_choices = array_map(fn($e) => $e === 0 ? $older_than : "$older_than,$e", $epochs);
+  }
+}
+
 $total = count($hosts);
 if ($older_than !== '') {
   $hosts = array_values(array_filter($hosts,
@@ -93,6 +113,16 @@ page_header($name, true);
   <a href="<?= h($here(['older_than' => ''])) ?>">Show every version</a>
 <?php endif; ?>
 </form>
+<?php if ($epoch_note !== ''): ?>
+<p class="note"><?= h($epoch_note) ?></p>
+<?php elseif ($epoch_choices !== []): ?>
+<p class="note">
+  <span class="mono"><?= h($older_than) ?></span> has no epoch, and the installed versions of
+  <span class="mono"><?= h($name) ?></span> have different epochs. pkg compares the epoch first,
+  so a version without one is older than every version with one. Compare against:
+  <?= implode(', ', array_map(fn($c) => '<a class="mono" href="' . h($here(['older_than' => $c])) . '">' . h($c) . '</a>', $epoch_choices)) ?>
+</p>
+<?php endif; ?>
 
 <?php if ($versions !== []): ?>
 <h2>Versions</h2>

@@ -21,3 +21,8 @@ CREATE ROLE reporting NOLOGIN;
 GRANT SELECT ON host      TO GROUP reporting;
 GRANT SELECT ON repo      TO GROUP reporting;
 GRANT SELECT ON host_repo TO GROUP reporting;
+GRANT SELECT ON host_package, package, package_version TO GROUP reporting;
+
+-- a login for the reporting website (servers/php/web)
+
+CREATE USER viewer WITH LOGIN PASSWORD '[change me]' IN ROLE reporting;

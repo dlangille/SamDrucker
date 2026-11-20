@@ -1,0 +1,18 @@
+<?php
+
+#
+# Configuration for the SamDrucker reporting website.
+# Install as /usr/local/etc/samdrucker/samdruckerweb.conf
+#
+# make sure this file is not world readable: readable by the user
+# php-fpm runs as (www), and no one else
+#
+# Use a login in the reporting role, not postie: the website only reads,
+# and reporting has SELECT and nothing else.
+#
+
+$host     = 'pg02.example.org';
+$port     = '5432';
+$db       = 'samdrucker';
+$user     = 'viewer';
+$password = '[redacted]';

@@ -8,7 +8,7 @@ Each component is designed to be:
 * small
 * simple
 * easily written
-* flexiable
+* flexible
 * few, if any, dependencies
 
 ## The components

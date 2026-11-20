@@ -5,8 +5,7 @@
 --
 --   upgraded:  createdb samdrucker_test
 --              pg_dump samdrucker.dev | psql -q samdrucker_test
---              psql samdrucker_test -f updates-2026.11.19-reconcile.sql
---              psql samdrucker_test -f updates-2026.11.19-multiple-repos.sql
+--              psql samdrucker_test -f updates-2026.11.19.sql
 --              psql samdrucker_test -f procedures.sql
 --              psql samdrucker_test -f test-multiple-repos.sql
 --

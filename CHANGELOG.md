@@ -50,8 +50,7 @@ When upgrading to this release, back up the database, then run these
 scripts, in this order, as the owner of the tables. If you are upgrading
 from a release before 0.2.4, run `PostgreSQL/updates-2020.08.28.sql` first.
 
-* `PostgreSQL/updates-2026.11.19-reconcile.sql`
-* `PostgreSQL/updates-2026.11.19-multiple-repos.sql`
+* `PostgreSQL/updates-2026.11.19.sql`
 * `PostgreSQL/procedures.sql`
 
 Upgrade the server before the clients. A 0.2.x server ignores what is new

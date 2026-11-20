@@ -77,6 +77,175 @@ function split_package(string $package_version): array {
   return $i === false ? [$package_version, ''] : [substr($package_version, 0, $i), substr($package_version, $i + 1)];
 }
 
+# Compare two FreeBSD package versions the way pkg does: -1, 0 or 1 as $a
+# is older than, the same as, or newer than $b, exactly as
+# `pkg version -t $a $b` prints <, = or >. Either may be a bare version
+# (1.30.7_1,3) or a package name and version (nginx-1.30.7_1,3).
+#
+# This is a line-for-line port of pkg_version_cmp() and its helpers from
+# libpkg/pkg_version.c in pkg (https://github.com/freebsd/pkg); see the
+# comments there for the rules. In short: the epoch (,3) counts first,
+# then the version, then the port revision (_1), so 1.30.7_1,3 is newer
+# than 1.30.7,3. Plain string or PHP version_compare() ordering gets
+# cases like that, and epochs, wrong.
+
+function pkg_version_cmp(string $a, string $b): int {
+  [$v1, $ve1, $e1, $r1] = pkg_version_split($a);
+  [$v2, $ve2, $e2, $r2] = pkg_version_split($b);
+  $result = 0;
+
+  # epoch, then version, then revision
+  if ($e1 !== $e2) {
+    $result = $e1 < $e2 ? -1 : 1;
+  }
+
+  if ($result === 0 && ($ve1 !== $ve2 || strncasecmp($v1, $v2, $ve1) !== 0)) {
+    $p1 = 0;
+    $p2 = 0;
+    while ($result === 0 && ($p1 < $ve1 || $p2 < $ve2)) {
+      $block1 = $block2 = false;
+      $c1 = $c2 = ['n' => 0, 'a' => 0, 'pl' => 0];
+      if ($p1 < $ve1 && $v1[$p1] !== '+') {
+        $p1 = pkg_version_component($v1, $p1, $c1);
+      } else {
+        $block1 = true;
+      }
+      if ($p2 < $ve2 && $v2[$p2] !== '+') {
+        $p2 = pkg_version_component($v2, $p2, $c2);
+      } else {
+        $block2 = true;
+      }
+      if ($block1 && $block2) {
+        if ($p1 < $ve1) $p1++;
+        if ($p2 < $ve2) $p2++;
+      } elseif ($c1['n'] !== $c2['n']) {
+        $result = $c1['n'] < $c2['n'] ? -1 : 1;
+      } elseif ($c1['a'] !== $c2['a']) {
+        $result = $c1['a'] < $c2['a'] ? -1 : 1;
+      } elseif ($c1['pl'] !== $c2['pl']) {
+        $result = $c1['pl'] < $c2['pl'] ? -1 : 1;
+      }
+    }
+  }
+
+  if ($result === 0 && $r1 !== $r2) {
+    $result = $r1 < $r2 ? -1 : 1;
+  }
+  return $result;
+}
+
+# split_version(): the version string (after the last '-'), the length of
+# its version part (before the revision and epoch), the epoch and the
+# revision.
+function pkg_version_split(string $s): array {
+  $dash = strrpos($s, '-');
+  $v = $dash === false ? $s : substr($s, $dash + 1);
+
+  $underscore = strrpos($v, '_');
+  $revision = $underscore === false ? 0 : pkg_version_strtoul(substr($v, $underscore + 1));
+  $end = $underscore === false ? null : $underscore;
+
+  $comma = strrpos($v, ',', $underscore === false ? 0 : $underscore + 1);
+  $epoch = $comma === false ? 0 : pkg_version_strtoul(substr($v, $comma + 1));
+  if ($comma !== false && $end === null) {
+    $end = $comma;
+  }
+
+  return [$v, $end ?? strlen($v), $epoch, $revision];
+}
+
+# strtoul(): the leading digits as a number, 0 if there are none
+function pkg_version_strtoul(string $s): int {
+  return preg_match('/^\s*\+?(\d+)/', $s, $m) ? (int) $m[1] : 0;
+}
+
+# isdigit() and isalpha() in the C locale; '' stands for the end of the string
+function pkg_version_isdigit(string $c): bool {
+  return $c !== '' && $c >= '0' && $c <= '9';
+}
+function pkg_version_isalpha(string $c): bool {
+  return $c !== '' && (($c >= 'a' && $c <= 'z') || ($c >= 'A' && $c <= 'Z'));
+}
+
+# get_component(): parse one component (number, letter, patch level)
+# starting at $pos into $c, and return the position after it and any
+# separators which follow.
+function pkg_version_component(string $v, int $pos, array &$c): int {
+  # pl sorts before every letter; the others sort by their first letter
+  static $stages = [['pl', 0], ['snap', 20], ['alpha', 2], ['beta', 3], ['pre', 17], ['rc', 19]];
+  $at = fn(int $i): string => $i < strlen($v) ? $v[$i] : '';
+  $hasstage = false;
+  $haspatchlevel = false;
+
+  # version number
+  if (pkg_version_isdigit($at($pos))) {
+    preg_match('/\d+/A', $v, $m, 0, $pos);
+    $c['n'] = (int) $m[0];
+    $pos += strlen($m[0]);
+  } elseif ($at($pos) === '*') {
+    $c['n'] = -2;
+    do {
+      $pos++;
+    } while ($at($pos) !== '' && $at($pos) !== '+');
+  } else {
+    $c['n'] = -1;
+    $hasstage = true;
+  }
+
+  # letter
+  if (pkg_version_isalpha($at($pos))) {
+    $letter = strtolower($at($pos));
+    $haspatchlevel = true;
+    if (pkg_version_isalpha($at($pos + 1))) {
+      foreach ($stages as [$name, $value]) {
+        $len = strlen($name);
+        if (strncasecmp(substr($v, $pos), $name, $len) === 0 && !pkg_version_isalpha($at($pos + $len))) {
+          if ($hasstage) {
+            $c['a'] = $value;
+            $pos += $len;
+          } else {
+            # insert a dot: the stage starts the next component
+            $c['a'] = 0;
+            $haspatchlevel = false;
+          }
+          $letter = '';
+          break;
+        }
+      }
+    }
+    if ($letter !== '') {
+      # use the first letter and skip the rest
+      $c['a'] = ord($letter) - ord('a') + 2;
+      do {
+        $pos++;
+      } while (pkg_version_isalpha($at($pos)));
+    }
+  } else {
+    $c['a'] = 0;
+    $haspatchlevel = false;
+  }
+
+  # patch level
+  if ($haspatchlevel) {
+    if (pkg_version_isdigit($at($pos))) {
+      preg_match('/\d+/A', $v, $m, 0, $pos);
+      $c['pl'] = (int) $m[0];
+      $pos += strlen($m[0]);
+    } else {
+      $c['pl'] = -1;
+    }
+  } else {
+    $c['pl'] = 0;
+  }
+
+  # skip separators
+  while ($at($pos) !== '' && !pkg_version_isdigit($at($pos)) && !pkg_version_isalpha($at($pos))
+         && $at($pos) !== '+' && $at($pos) !== '*') {
+    $pos++;
+  }
+  return $pos;
+}
+
 # host.date_updated is a UTC timestamp without a time zone.
 function age(?string $utc): string {
   if ($utc === null) {

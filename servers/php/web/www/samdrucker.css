@@ -162,6 +162,19 @@ table.sortable th[aria-sort="descending"]::after { content: " \25BC"; font-size:
 tr.disabled td { color: var(--muted); }
 .muted { color: var(--muted); }
 .export { margin: 4px 0; }
+
+/* package page: the older-than filter, and versions older than it */
+form.older-than { margin: 8px 0 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+form.older-than input[type="text"] {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--fg);
+}
+form.older-than button { font: inherit; padding: 3px 12px; }
+table.versions td:last-child { font-size: 13px; }
+.tag.older { background: var(--stale-bg); color: var(--stale-fg); font-weight: 600; margin-right: 6px; }
 .export a { margin-left: 6px; }
 
 dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 8px 0; }

@@ -33,7 +33,7 @@ if (export_format()) {
   }, $packages));
 }
 
-page_header($host['name']);
+page_header($host['name'], true);
 ?>
 <dl class="facts">
   <dt>Status</dt>
@@ -77,7 +77,7 @@ page_header($host['name']);
   [$pname, $pversion] = split_package($p['package_version']); ?>
 <tr>
   <td><?= package_link($pname) ?></td>
-  <td><?= h($pversion) ?></td>
+  <td class="mono"><?= h($pversion) ?></td>
   <td><?= $p['repo_name'] === null ? '<span class="muted">unknown</span>' : h($p['repo_name']) ?></td>
 </tr>
 <?php endforeach; ?>

@@ -46,7 +46,7 @@ if (export_format()) {
   }, $hosts));
 }
 
-page_header($name);
+page_header($name, true);
 ?>
 <p>
   <?= count($hosts) ?> hosts<?= $all ? ', including disabled ones' : '' ?>.
@@ -60,7 +60,7 @@ page_header($name);
 <thead><tr><th>Version</th><th class="num">Hosts</th></tr></thead>
 <tbody>
 <?php foreach ($versions as $v => $n): ?>
-<tr><td><?= h((string) $v) ?></td><td class="num"><?= $n ?></td></tr>
+<tr><td class="mono"><?= h((string) $v) ?></td><td class="num"><?= $n ?></td></tr>
 <?php endforeach; ?>
 </tbody>
 </table>
@@ -79,7 +79,7 @@ page_header($name);
   [, $v] = split_package($r['package_version']); ?>
 <tr<?= $r['enabled'] ? '' : ' class="disabled"' ?>>
   <td><?= host_link($r['host']) ?><?= $r['enabled'] ? '' : ' <span class="tag">disabled</span>' ?></td>
-  <td><?= h($v) ?></td>
+  <td class="mono"><?= h($v) ?></td>
   <td title="<?= h($r['url']) ?>"><?= $r['repo_name'] === null ? '<span class="muted">unknown</span>' : h($r['repo_name']) ?></td>
 </tr>
 <?php endforeach; ?>

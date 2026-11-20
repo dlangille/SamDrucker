@@ -53,8 +53,47 @@ as a formula. JSON is never changed.
 
 The website lists the exact package versions on every host, which is a map
 of what each host is vulnerable to. Serve it on an internal name only,
-restrict it to your own networks, and add a password if needed. It sends
-`noindex` to search engines, but that is no substitute for access control.
+restrict it to your own networks, and require a password. The sample
+nginx configuration does both. The site sends `noindex` to search
+engines, but that is no substitute for access control.
+
+## Passwords
+
+The sample nginx configuration turns on HTTP basic authentication, with
+the passwords in `/usr/local/etc/nginx/samdruckerweb.htpasswd`. Create
+that file before reloading nginx. Without it, nginx answers every request
+with a 500 error.
+
+Each line is `user:hashed-password`. `openssl` in the FreeBSD base system
+makes the hash; you do not need Apache's `htpasswd`.
+
+1. Create the file, readable by the nginx workers (`www`) and no one else:
+
+   ```
+   sudo install -m 640 -o root -g www /dev/null /usr/local/etc/nginx/samdruckerweb.htpasswd
+   ```
+
+1. Add a user. `openssl` asks for the password twice and prints a
+   SHA-512 crypt hash, which nginx checks with the system's `crypt(3)`:
+
+   ```
+   printf 'dan:%s\n' "$(openssl passwd -6)" | sudo tee -a /usr/local/etc/nginx/samdruckerweb.htpasswd > /dev/null
+   ```
+
+   Repeat for each user, with their own name in place of `dan`.
+
+1. Check the configuration and reload:
+
+   ```
+   sudo nginx -t && sudo service nginx reload
+   ```
+
+To change a password, delete that user's line and add it again. To remove
+a user, delete their line. nginx reads the file on every request, so no
+reload is needed for either.
+
+Basic authentication sends the password with every request, so serve the
+website over HTTPS only, as the sample does.
 
 The website only reads. It connects as a member of the `reporting` role,
 which has `SELECT` and nothing else, and sets its session read-only too.

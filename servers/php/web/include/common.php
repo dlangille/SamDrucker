@@ -63,11 +63,11 @@ function param(string $name): string {
 }
 
 function host_link(string $name): string {
-  return '<a href="host.php?name=' . h(rawurlencode($name)) . '">' . h($name) . '</a>';
+  return '<a class="mono" href="host.php?name=' . h(rawurlencode($name)) . '">' . h($name) . '</a>';
 }
 
 function package_link(string $name, ?string $text = null): string {
-  return '<a href="package.php?name=' . h(rawurlencode($name)) . '">' . h($text ?? $name) . '</a>';
+  return '<a class="mono" href="package.php?name=' . h(rawurlencode($name)) . '">' . h($text ?? $name) . '</a>';
 }
 
 # Split "php85-8.5.0" into ["php85", "8.5.0"] the way HostAddPackages()
@@ -94,7 +94,9 @@ function utc(?string $utc): string {
   return $utc === null ? '' : substr($utc, 0, 16) . ' UTC';
 }
 
-function page_header(string $title): void {
+# $mono: show the heading in a fixed-width font, for a hostname or a
+# package name
+function page_header(string $title, bool $mono = false): void {
   header('Content-Type: text/html; charset=UTF-8');
   header("Content-Security-Policy: default-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
   header('X-Content-Type-Options: nosniff');
@@ -127,7 +129,7 @@ function page_header(string $title): void {
   </form>
 </header>
 <main>
-<h1><?= h($title) ?></h1>
+<h1<?= $mono ? ' class="mono"' : '' ?>><?= h($title) ?></h1>
 <?php
 }
 

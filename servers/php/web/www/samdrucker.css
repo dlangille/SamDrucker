@@ -58,7 +58,7 @@ header nav { display: flex; gap: 14px; }
 header nav a[aria-current="page"] { text-decoration: underline; text-underline-offset: 4px; }
 header form { margin-left: auto; }
 
-main { padding: 8px 16px 24px; max-width: 1200px; }
+main { padding: 8px 16px 24px; }
 h1 { font-size: 22px; margin: 12px 0 8px; overflow-wrap: anywhere; }
 h2 { font-size: 17px; margin: 24px 0 8px; }
 
@@ -73,14 +73,59 @@ input[type="search"] {
 }
 input.filter { margin: 4px 0 8px; width: 20em; }
 
-table { border-collapse: collapse; width: 100%; display: block; overflow-x: auto; }
+/* result tables use the whole width of the window; small summary
+   tables (versions, a host's repositories) keep their natural size */
+table { border-collapse: collapse; }
+table.sortable { width: 100%; }
+
+/* on narrow screens, a table wider than the window scrolls sideways
+   instead of widening the page */
+@media (max-width: 700px) {
+  table { display: block; overflow-x: auto; }
+  /* no column resizing on narrow screens */
+  .column-resize, .reset-columns { display: none; }
+}
 th, td { text-align: left; padding: 5px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
 th { white-space: nowrap; }
 tbody tr:nth-child(even) { background: var(--stripe); }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
-.url { font-family: ui-monospace, Menlo, monospace; font-size: 13px; overflow-wrap: anywhere; }
+.url, .mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
+.url { overflow-wrap: anywhere; }
+h1.mono { font-size: 20px; }
 
 table.sortable th { cursor: pointer; user-select: none; }
+
+/* column resizing (samdrucker.js): a drag handle on the right edge of
+   each heading. Once a viewer sets a width, the table uses fixed layout
+   and text which does not fit ends in an ellipsis. */
+table.sortable th { position: relative; }
+.column-resize {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 7px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+}
+.column-resize:hover, .column-resize.active { background: var(--link); opacity: 0.5; }
+table.fixed-columns { table-layout: fixed; }
+table.fixed-columns th, table.fixed-columns td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reset-columns {
+  font: inherit;
+  font-size: 13px;
+  margin: 0 0 6px;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--link);
+  cursor: pointer;
+}
 table.sortable th[aria-sort="ascending"]::after  { content: " \25B2"; font-size: 11px; }
 table.sortable th[aria-sort="descending"]::after { content: " \25BC"; font-size: 11px; }
 

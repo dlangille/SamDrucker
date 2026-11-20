@@ -63,6 +63,29 @@ CREATE OR REPLACE FUNCTION HostsWithPackageShowVersion(text)
 SELECT * FROM HostsWithPackageShowVersion($1, true)
 $$ LANGUAGE SQL STABLE;
 
+-- which hosts have this package, in which version, and from which repository
+-- select * from HostsWithPackageShowRepo('php85');
+-- repo_name and url are NULL when the repository is not known: a 0.2.x
+-- client, a package added from a file, or a repository since disabled.
+
+CREATE OR REPLACE FUNCTION HostsWithPackageShowRepo(text,boolean)
+  RETURNS TABLE(host text, package_version text, repo_name text, url text) AS $$
+SELECT H.name, P.name || '-' || PV.version, HR.name, R.url
+  FROM package P JOIN package_version PV ON P.name     = $1
+                                        AND P.id       = PV.package_id
+                 JOIN host_package HP    ON PV.id      = HP.package_version_id
+                 JOIN host         H     ON HP.host_id = H.id  AND H.enabled = $2
+            LEFT JOIN repo         R     ON HP.repo_id = R.id
+            LEFT JOIN host_repo    HR    ON HR.host_id = HP.host_id
+                                        AND HR.repo_id = HP.repo_id
+ ORDER BY H.name
+$$ LANGUAGE SQL STABLE;
+
+CREATE OR REPLACE FUNCTION HostsWithPackageShowRepo(text)
+  RETURNS TABLE(host text, package_version text, repo_name text, url text) AS $$
+SELECT * FROM HostsWithPackageShowRepo($1, true)
+$$ LANGUAGE SQL STABLE;
+
 -- which enabled repositories does this host use
 -- SELECT * FROM ReposOnHost('foo.example.org');
 -- name is NULL for hosts running a 0.2.x client, which sends only a URL.

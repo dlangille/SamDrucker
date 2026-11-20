@@ -116,6 +116,17 @@ BEGIN
       (SELECT string_agg(package_version || '=' || coalesce(repo_name, '-'), ',' ORDER BY package_version)
          FROM PackagesOnHostShowRepo('new.test.invalid'));
   END IF;
+-- bash is on hosts 1 (0.2.x client), 2 (0.3.0beta client) and 3: only
+-- host 3 says where it came from
+  IF (SELECT string_agg(host || '=' || coalesce(repo_name, '-'), ',' ORDER BY host)
+        FROM HostsWithPackageShowRepo('bash')
+       WHERE host LIKE '%.test.invalid')
+     <> 'beta.test.invalid=-,new.test.invalid=local,old.test.invalid=-' THEN
+    RAISE EXCEPTION '3: HostsWithPackageShowRepo() is wrong: %',
+      (SELECT string_agg(host || '=' || coalesce(repo_name, '-'), ',' ORDER BY host)
+         FROM HostsWithPackageShowRepo('bash')
+        WHERE host LIKE '%.test.invalid');
+  END IF;
 -- hosts 2 and 3 share two URLs: each URL must be stored once
   IF (SELECT count(*) FROM repo WHERE url LIKE 'http://proxy.test.invalid/%') <> 2 THEN
     RAISE EXCEPTION '3: a repository URL was stored more than once';

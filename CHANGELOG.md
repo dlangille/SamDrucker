@@ -41,7 +41,9 @@ New in the database:
 * table `host_repo`: each host's enabled repositories, with the name and
   priority that host gives each one
 * column `host_package.repo_id`
-* functions `ReposOnHost(host)` and `PackagesOnHostShowRepo(host)`
+* functions `ReposOnHost(host)`, `PackagesOnHostShowRepo(host)` and
+  `HostsWithPackageShowRepo(package)`; the last also takes a boolean,
+  like the other query functions, to list hosts which are not enabled
 
 `host.repo` is still filled in, and the existing query functions return
 what they did before.

@@ -39,8 +39,11 @@ as a formula. JSON is never changed.
 1. Run `PostgreSQL/updates-website.sql`, and create a login in the
    `reporting` role if you do not have one (see that file).
 1. Allow that login from the web server in `pg_hba.conf`.
-1. Copy `include/` and `www/` side by side, for example to
-   `/usr/local/www/samdrucker/web/`.
+1. Copy `include/` and `www/` side by side, into a directory of their own,
+   for example `/usr/local/www/samdruckerweb/` (where the FreeBSD port
+   `www/samdruckerweb` puts them). Do not put them under the check-in
+   server's web root, or they can be reached through that server, past
+   any restriction on the website's own server block.
 1. Copy `samdruckerweb.conf.sample` to
    `/usr/local/etc/samdrucker/samdruckerweb.conf`, fill it in, and make it
    readable only by the user php-fpm runs as.

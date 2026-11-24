@@ -9,6 +9,8 @@ declare(strict_types=1);
 # hold only those hosts too. This answers "which hosts need this security
 # update?". VERSION may also be given as the package name and version, as
 # security advisories write it: nginx-1.30.7,3.
+#
+# ?version=VERSION shows only the hosts with exactly that version.
 
 require __DIR__ . '/../include/common.php';
 
@@ -24,6 +26,17 @@ if (str_starts_with($older_than, $name . '-')) {
   $older_than = substr($older_than, strlen($name) + 1);
 }
 if (strlen($older_than) > 100 || preg_match('/\s/', $older_than)) {
+  $older_than = '';
+}
+
+# ?version=VERSION shows only the hosts with exactly that version. It is
+# what the host count beside each version links to. When both are given,
+# version wins: the links never set both.
+$version = param('version');
+if (strlen($version) > 100 || preg_match('/\s/', $version)) {
+  $version = '';
+}
+if ($version !== '') {
   $older_than = '';
 }
 
@@ -50,6 +63,18 @@ foreach ($hosts as $r) {
 }
 uksort($versions, fn($a, $b) => pkg_version_cmp((string) $b, (string) $a));
 
+# for each version, how many hosts have an older one: the count shown on
+# its "older" link, so the link says what it will list
+$older_counts = [];
+foreach ($versions as $v => $n) {
+  $older_counts[$v] = 0;
+  foreach ($versions as $w => $m) {
+    if (pkg_version_cmp((string) $w, (string) $v) < 0) {
+      $older_counts[$v] += $m;
+    }
+  }
+}
+
 # A version typed without an epoch (1.30.7 rather than 1.30.7,3) has
 # epoch 0, and pkg compares epochs first, so every installed version with
 # an epoch counts as newer and the filter shows nothing. That is never
@@ -74,17 +99,24 @@ $total = count($hosts);
 if ($older_than !== '') {
   $hosts = array_values(array_filter($hosts,
     fn($r) => pkg_version_cmp(split_package($r['package_version'])[1], $older_than) < 0));
+} elseif ($version !== '') {
+  $hosts = array_values(array_filter($hosts,
+    fn($r) => split_package($r['package_version'])[1] === $version));
 }
 
 # this page's address with some parameters changed, for links
-$here = function (array $changes) use ($name, $all, $older_than): string {
-  $q = array_filter(array_merge(['name' => $name, 'all' => $all ? '1' : '', 'older_than' => $older_than], $changes),
+$here = function (array $changes) use ($name, $all, $older_than, $version): string {
+  $q = array_filter(array_merge(['name' => $name, 'all' => $all ? '1' : '',
+                                 'older_than' => $older_than, 'version' => $version], $changes),
                     fn($v) => $v !== '');
   return 'package.php?' . http_build_query($q);
 };
 
 if (export_format()) {
-  export('hosts-with-' . $name . ($older_than === '' ? '' : '-older-than-' . $older_than) . ($all ? '-all' : ''), [
+  export('hosts-with-' . $name
+         . ($older_than === '' ? '' : '-older-than-' . $older_than)
+         . ($version === '' ? '' : '-version-' . $version)
+         . ($all ? '-all' : ''), [
     'host' => 'host', 'enabled' => 'host_enabled', 'package' => 'package', 'version' => 'version',
     'repo_name' => 'repository', 'url' => 'url',
   ], array_map(function ($r) {
@@ -109,8 +141,8 @@ page_header($name, true);
     <input type="text" name="older_than" class="mono" size="20" value="<?= h($older_than) ?>" placeholder="for example 1.30.7,3" spellcheck="false" autocapitalize="off">
   </label>
   <button type="submit">Show</button>
-<?php if ($older_than !== ''): ?>
-  <a href="<?= h($here(['older_than' => ''])) ?>">Show every version</a>
+<?php if ($older_than !== '' || $version !== ''): ?>
+  <a href="<?= h($here(['older_than' => '', 'version' => ''])) ?>">Show every version</a>
 <?php endif; ?>
 </form>
 <?php if ($epoch_note !== ''): ?>
@@ -127,30 +159,36 @@ page_header($name, true);
 <?php if ($versions !== []): ?>
 <h2>Versions</h2>
 <table class="versions">
-<thead><tr><th>Version</th><th class="num">Hosts</th><th></th></tr></thead>
+<thead><tr><th>Version</th><th class="num">Hosts on it</th><th>Hosts on an older version</th></tr></thead>
 <tbody>
 <?php foreach ($versions as $v => $n):
+  $older = $older_counts[$v];
   $v = (string) $v;
   $is_older = $older_than !== '' && pkg_version_cmp($v, $older_than) < 0; ?>
 <tr<?= $is_older ? ' class="older"' : '' ?>>
-  <td class="mono"><?= h($v) ?></td>
-  <td class="num"><?= $n ?></td>
-  <td><?= $is_older ? '<span class="tag older">older</span>' : '' ?>
-      <a href="<?= h($here(['older_than' => $v])) ?>">hosts older than this</a></td>
+  <td class="mono"><?= $is_older ? '<span class="tag older">older</span>' : '' ?><?= h($v) ?></td>
+  <td class="num"><a href="<?= h($here(['version' => $v, 'older_than' => ''])) ?>"
+      title="the hosts with <?= h($v) ?>"><?= $n ?></a></td>
+  <td><?php if ($older > 0): ?><a href="<?= h($here(['older_than' => $v, 'version' => ''])) ?>"
+      title="the hosts with a version older than <?= h($v) ?>"><?= $older ?> <?= $older === 1 ? 'host' : 'hosts' ?> older than <?= h($v) ?></a><?php else: ?><span class="muted">none</span><?php endif; ?></td>
 </tr>
 <?php endforeach; ?>
 </tbody>
 </table>
 <?php endif; ?>
 
-<?php if ($older_than === ''): ?>
+<?php if ($version !== ''): ?>
+<h2>Hosts with version <span class="mono"><?= h($version) ?></span></h2>
+<p><?= count($hosts) ?> of <?= $total ?> hosts.</p>
+<?php elseif ($older_than === ''): ?>
 <h2>Hosts</h2>
 <?php else: ?>
 <h2>Hosts with a version older than <span class="mono"><?= h($older_than) ?></span></h2>
 <p><?= count($hosts) ?> of <?= $total ?> hosts.</p>
 <?php endif; ?>
 <?php if ($hosts === []): ?>
-<p><?= $older_than === '' ? 'No host has this package installed now.' : 'None: every host has this version or newer.' ?></p>
+<p><?= $version !== '' ? 'None: no host has this version.'
+      : ($older_than === '' ? 'No host has this package installed now.' : 'None: every host has this version or newer.') ?></p>
 <?php else: ?>
 <?= export_links() ?>
 <input type="search" class="filter" data-table="hosts" placeholder="Filter hosts" aria-label="Filter hosts">

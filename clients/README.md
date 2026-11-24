@@ -14,6 +14,6 @@ The scripts and dependencies are listed below:
 
 * https://github.com/jpmens/jo - for constructing `JSON` from a shell
 * curl - for posting to the web server
-* `/usr/libexec/flua`, from the FreeBSD base system - used by
-  `samdrucker.repo-to-json.stdin` to convert `pkg repos` output to `JSON`
+* `/usr/libexec/flua`, from the FreeBSD base system (the `FreeBSD-flua`
+  package on pkgbase hosts) - converts `pkg repos` output to `JSON`
 

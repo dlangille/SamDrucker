@@ -5,6 +5,31 @@
 Any changes to the `host` table with automatically update the `date_updated`
 field. See `update_date_updated` in `PostgreSQL/database-postgresql.sql`.
 
+## 0.3.2
+
+The client is one script again. `samdrucker.repo-to-json.stdin`, which
+converted the `pkg repos` output to `JSON`, is gone; its few lines of Lua
+are now inside `samdrucker.sh` and run with `flua -e`. What the client
+sends, and what it reports when a check-in fails, have not changed.
+
+The client still needs `/usr/libexec/flua` from the base system (on
+pkgbase hosts, the `FreeBSD-flua` package).
+
+On the reporting website, a package's Versions table now says what each
+link lists. The host count beside a version links to the hosts on exactly
+that version (new filter `?version=`), and the older-than link shows how
+many hosts it will list, for example "73 hosts older than 0.3.0_1", or
+"none" on the oldest version. Before, the link beside the oldest version
+read "hosts older than this" and listed nobody.
+
+Nothing changes in `samdrucker.php` or in the database. Packagers: stop
+installing `samdrucker.repo-to-json.stdin`, and remove it from the plist.
+
+## 0.3.1
+
+Tagged by mistake before the changes above were committed: 0.3.1 is the
+same code as 0.3.0. Use 0.3.2.
+
 ## 0.3.0
 
 A host can now use more than one pkg repository at once, as it does with

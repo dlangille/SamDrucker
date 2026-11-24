@@ -54,7 +54,21 @@ SED="/usr/bin/sed"
 SORT="/usr/bin/sort"
 TAIL="/usr/bin/tail"
 TR="/usr/bin/tr"
-REPO2JSON="/usr/local/bin/samdrucker.repo-to-json.stdin"
+FLUA="/usr/libexec/flua"
+
+# Lua for flua: converts the UCL printed by `pkg repos` into JSON. It is
+# passed with -e, so stdin stays free for the data. Up to 0.3.0 this
+# was a separate script, samdrucker.repo-to-json.stdin (obtained from dch).
+REPO2JSON_LUA='
+local ucl = require("ucl")
+local parser = ucl.parser()
+local ok, err = parser:parse_string(io.stdin:read("*all"))
+if not ok then
+  io.stderr:write("Error parsing UCL: " .. err .. "\n")
+  os.exit(1)
+end
+print(ucl.to_format(parser:get_object(), "json"))
+'
 
 hostname=$(/bin/hostname)
 uname=$(/usr/bin/uname)
@@ -67,7 +81,7 @@ repos_ucl=$($PKG repos -e)
 repo=$(echo "$repos_ucl" | $GREP ' url ' | $HEAD -1 | $CUT -f2 -d \")
 
 # All enabled repositories, converted to JSON.
-repos=$(echo "$repos_ucl" | $REPO2JSON)
+repos=$(echo "$repos_ucl" | $FLUA -e "$REPO2JSON_LUA")
 if [ -z "$repos" ]; then
   repos='{}'
 fi

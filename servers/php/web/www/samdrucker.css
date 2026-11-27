@@ -90,7 +90,7 @@ th { white-space: nowrap; }
 tbody tr:nth-child(even) { background: var(--stripe); }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 .url, .mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
-.url { overflow-wrap: anywhere; }
+.url { white-space: nowrap; }
 h1.mono { font-size: 20px; }
 
 table.sortable th { cursor: pointer; user-select: none; }

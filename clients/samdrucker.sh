@@ -153,6 +153,13 @@ lua_errors=$( { SAMDRUCKER_NAME="$hostname" SAMDRUCKER_OS="$uname" \
                 $FLUA -e "$PAYLOAD_LUA" > "$payload"; } 2>&1 ) \
   || fail "flua failed to build the JSON payload: $lua_errors"
 
+# The payload was built, but pkg may have printed warnings, for example
+# about a repository it could not reach. Pass them on to stderr, so
+# periodic(8) still includes them in the daily mail.
+if [ -n "$lua_errors" ]; then
+  echo "$lua_errors" >&2
+fi
+
 # Before 0.3.0 the sample configuration had "--output /dev/null" in
 # CURL_OPTIONS, which threw away the server's reply. We need the reply to
 # know whether the check-in worked, so drop that option if it is there.

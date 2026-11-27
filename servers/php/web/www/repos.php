@@ -35,6 +35,8 @@ page_header('Repositories');
 <p><?= count($repos) ?> repositories in use by enabled hosts.</p>
 <?= export_links() ?>
 
+<input type="search" class="filter" data-table="repos" data-columns="0 1" placeholder="Filter repositories" aria-label="Filter repositories">
+
 <table id="repos" class="sortable">
 <thead><tr><th>URL</th><th>Names</th><th class="num">Packages</th><th>Hosts</th></tr></thead>
 <tbody>
@@ -44,7 +46,7 @@ page_header('Repositories');
   <td class="url"><?= h($r['url']) ?></td>
   <td><?= $r['names'] === null ? '<span class="muted">not sent by these clients</span>' : h($r['names']) ?></td>
   <td class="num"><?= (int) $r['packages'] ?></td>
-  <td data-sort="<?= count($hosts) ?>"><?= implode(', ', array_map('host_link', $hosts)) ?></td>
+  <td data-sort="<?= count($hosts) ?>"><?= implode('<br>', array_map('host_link', $hosts)) ?></td>
 </tr>
 <?php endforeach; ?>
 </tbody>

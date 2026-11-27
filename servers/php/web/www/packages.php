@@ -44,6 +44,8 @@ page_header($q === '' ? 'Packages' : "Packages matching \"$q\"");
 <p>Only one match: <?= package_link($packages[0]['name']) ?>.</p>
 <?php endif; ?>
 
+<input type="search" class="filter" data-table="packages" data-columns="0" placeholder="Filter packages" aria-label="Filter packages">
+
 <table id="packages" class="sortable">
 <thead><tr><th>Package</th><th class="num">Hosts</th><th class="num">Versions</th></tr></thead>
 <tbody>

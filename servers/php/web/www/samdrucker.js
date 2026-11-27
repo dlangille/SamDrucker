@@ -141,14 +141,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // <input class="filter" data-table="ID">: hide rows of table ID which do
-  // not contain the typed text.
+  // not contain the typed text. With data-columns="0 1", only those
+  // columns (counted from 0) are searched, so a filter labelled for one
+  // kind of thing does not match on another column's text.
   for (const input of document.querySelectorAll('input.filter[data-table]')) {
     const table = document.getElementById(input.dataset.table);
     if (!table) continue;
+    const columns = input.dataset.columns?.trim().split(/\s+/).map(Number);
+    const text = row => columns
+      ? columns.map(c => row.cells[c]?.textContent ?? '').join('\n')
+      : row.textContent;
     input.addEventListener('input', () => {
       const needle = input.value.trim().toLowerCase();
       for (const row of table.tBodies[0].rows) {
-        row.hidden = needle !== '' && !row.textContent.toLowerCase().includes(needle);
+        row.hidden = needle !== '' && !text(row).toLowerCase().includes(needle);
       }
     });
   }

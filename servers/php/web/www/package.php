@@ -11,6 +11,10 @@ declare(strict_types=1);
 # security advisories write it: nginx-1.30.7,3.
 #
 # ?version=VERSION shows only the hosts with exactly that version.
+#
+# ?repo=URL shows only the hosts which installed it from that repository;
+# the versions and counts then cover only those hosts. The repository
+# page links here with it.
 
 require __DIR__ . '/../include/common.php';
 
@@ -40,6 +44,11 @@ if ($version !== '') {
   $older_than = '';
 }
 
+$repo = param('repo');
+if (strlen($repo) > 1000) {
+  $repo = '';
+}
+
 $hosts = rows('SELECT host, package_version, repo_name, url, true AS enabled
                  FROM HostsWithPackageShowRepo(:name, true)', ['name' => $name]);
 if ($all) {
@@ -48,7 +57,11 @@ if ($all) {
             FROM HostsWithPackageShowRepo(:name, false)', ['name' => $name]));
 }
 
-if ($hosts === [] && !$all) {
+if ($repo !== '') {
+  $hosts = array_values(array_filter($hosts, fn($r) => $r['url'] === $repo));
+}
+
+if ($hosts === [] && !$all && $repo === '') {
   $known = rows('SELECT 1 FROM package WHERE name = :name', ['name' => $name]);
   if ($known === []) {
     not_found("No host has ever reported a package named $name.");
@@ -105,9 +118,10 @@ if ($older_than !== '') {
 }
 
 # this page's address with some parameters changed, for links
-$here = function (array $changes) use ($name, $all, $older_than, $version): string {
+$here = function (array $changes) use ($name, $all, $older_than, $version, $repo): string {
   $q = array_filter(array_merge(['name' => $name, 'all' => $all ? '1' : '',
-                                 'older_than' => $older_than, 'version' => $version], $changes),
+                                 'older_than' => $older_than, 'version' => $version,
+                                 'repo' => $repo], $changes),
                     fn($v) => $v !== '');
   return 'package.php?' . http_build_query($q);
 };
@@ -116,6 +130,7 @@ if (export_format()) {
   export('hosts-with-' . $name
          . ($older_than === '' ? '' : '-older-than-' . $older_than)
          . ($version === '' ? '' : '-version-' . $version)
+         . ($repo === '' ? '' : '-from-' . $repo)
          . ($all ? '-all' : ''), [
     'host' => 'host', 'enabled' => 'host_enabled', 'package' => 'package', 'version' => 'version',
     'repo_name' => 'repository', 'url' => 'url',
@@ -127,6 +142,13 @@ if (export_format()) {
 
 page_header($name, true);
 ?>
+<?php if ($repo !== ''): ?>
+<p class="note">
+  Only hosts which installed it from
+  <a class="mono" href="repo.php?url=<?= h(rawurlencode($repo)) ?>"><?= h($repo) ?></a>.
+  <a href="<?= h($here(['repo' => ''])) ?>">Show every repository</a>
+</p>
+<?php endif; ?>
 <p>
   <?= $total ?> hosts<?= $all ? ', including disabled ones' : '' ?>.
   <a href="<?= h($here(['all' => $all ? '' : '1'])) ?>"><?= $all ? 'Hide disabled hosts' : 'Show disabled hosts' ?></a>
@@ -136,6 +158,9 @@ page_header($name, true);
   <input type="hidden" name="name" value="<?= h($name) ?>">
 <?php if ($all): ?>
   <input type="hidden" name="all" value="1">
+<?php endif; ?>
+<?php if ($repo !== ''): ?>
+  <input type="hidden" name="repo" value="<?= h($repo) ?>">
 <?php endif; ?>
   <label>Only hosts with a version older than
     <input type="text" name="older_than" class="mono" size="20" value="<?= h($older_than) ?>" placeholder="for example 1.30.7,3" spellcheck="false" autocapitalize="off">
@@ -188,7 +213,9 @@ page_header($name, true);
 <?php endif; ?>
 <?php if ($hosts === []): ?>
 <p><?= $version !== '' ? 'None: no host has this version.'
-      : ($older_than === '' ? 'No host has this package installed now.' : 'None: every host has this version or newer.') ?></p>
+      : ($older_than !== '' ? 'None: every host has this version or newer.'
+      : ($repo !== '' ? 'No host has this package installed from this repository now.'
+      : 'No host has this package installed now.')) ?></p>
 <?php else: ?>
 <?= export_links() ?>
 <input type="search" class="filter" data-table="hosts" placeholder="Filter hosts" aria-label="Filter hosts">

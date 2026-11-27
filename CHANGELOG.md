@@ -24,6 +24,22 @@ A host with no enabled repository now sends `"repo": ""` instead of
 Nothing changes in `samdrucker.php` or in the database. Packagers: drop
 `jo` from the client's RUN_DEPENDS.
 
+On the reporting website, each URL on the Repositories page links to a
+new page for that repository (`repo.php?url=`). It lists every package
+that enabled hosts installed from it, with how many hosts have each and
+in how many versions. Click a package there to see its page narrowed to
+the hosts which installed it from that repository (new filter
+`?repo=URL` on `package.php`). Hosts on a 0.2.x client do not say which
+repository each package came from, and a repository used only by such
+hosts says so. The Repositories page's Packages column, which counted
+one per package per host, is now called Installs, in the table and in
+the downloads (column `installs`, was `packages`). That page also no
+longer wraps URLs, and lists the hosts using each repository one per
+line. Repositories and Packages have a filter box: on Repositories it
+matches only URLs and repository names, on Packages only package names.
+The new pages use only tables the reporting role can already read.
+Packagers: add `www/repo.php` to the website's pkg-plist.
+
 ## 0.3.2
 
 The client is one script again. `samdrucker.repo-to-json.stdin`, which

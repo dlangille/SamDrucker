@@ -5,6 +5,25 @@
 Any changes to the `host` table with automatically update the `date_updated`
 field. See `update_date_updated` in `PostgreSQL/database-postgresql.sql`.
 
+## Unreleased
+
+The client no longer needs `jo` (issue #7). `samdrucker.sh` now builds
+the whole payload with `flua`, from the base system, which it already
+needed. It reads the installed packages with one `pkg query` instead of
+one per repository. The `JSON` it sends has the same contents as before,
+still pretty-printed, but the keys are no longer in a fixed order.
+
+If `pkg repos -e` or `pkg query` fails, or pkg prints repositories that
+cannot be parsed, the client now reports the failure (stderr, syslog,
+exit 1) and sends nothing. Before, it sent the check-in without
+repositories.
+
+A host with no enabled repository now sends `"repo": ""` instead of
+`"repo": null`. The server stores both as an empty string.
+
+Nothing changes in `samdrucker.php` or in the database. Packagers: drop
+`jo` from the client's RUN_DEPENDS.
+
 ## 0.3.2
 
 The client is one script again. `samdrucker.repo-to-json.stdin`, which

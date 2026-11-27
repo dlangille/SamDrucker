@@ -12,8 +12,9 @@ The scripts and dependencies are listed below:
 
 `samdrucker.sh`
 
-* https://github.com/jpmens/jo - for constructing `JSON` from a shell
-* curl - for posting to the web server
 * `/usr/libexec/flua`, from the FreeBSD base system (the `FreeBSD-flua`
-  package on pkgbase hosts) - converts `pkg repos` output to `JSON`
+  package on pkgbase hosts) - builds the `JSON` payload
+* curl - for posting to the web server
+
+Up to 0.3.2, `samdrucker.sh` also needed https://github.com/jpmens/jo.
 

@@ -45,54 +45,95 @@ fi
 
 CURL="/usr/local/bin/curl"
 CUT="/usr/bin/cut"
-GREP="/usr/bin/grep"
-HEAD="/usr/bin/head"
-JO="/usr/local/bin/jo"
+FLUA="/usr/libexec/flua"
 LOGGER="/usr/bin/logger"
 PKG="/usr/sbin/pkg"
 SED="/usr/bin/sed"
-SORT="/usr/bin/sort"
 TAIL="/usr/bin/tail"
 TR="/usr/bin/tr"
-FLUA="/usr/libexec/flua"
 
-# Lua for flua: converts the UCL printed by `pkg repos` into JSON. It is
-# passed with -e, so stdin stays free for the data. Up to 0.3.0 this
-# was a separate script, samdrucker.repo-to-json.stdin (obtained from dch).
-REPO2JSON_LUA='
+# Lua for flua: builds the whole JSON payload described above and writes
+# it to stdout. It runs `pkg repos -e` and `pkg query` itself. It is
+# passed with -e; the shell hands it the values it needs in the
+# environment. Up to 0.3.2 the payload was built with jo(1).
+PAYLOAD_LUA='
 local ucl = require("ucl")
-local parser = ucl.parser()
-local ok, err = parser:parse_string(io.stdin:read("*all"))
-if not ok then
-  io.stderr:write("Error parsing UCL: " .. err .. "\n")
+local pkg = os.getenv("PKG")
+
+local function die(msg)
+  io.stderr:write(msg .. "\n")
   os.exit(1)
 end
-print(ucl.to_format(parser:get_object(), "json"))
+
+-- run a command, return everything it printed; give up if it fails
+local function run(cmd)
+  local f = io.popen(cmd)
+  local out = f:read("a")
+  local ok, how, code = f:close()
+  if not ok then
+    die(cmd .. " failed (" .. how .. " " .. tostring(code) .. ")")
+  end
+  return out
+end
+
+-- ucl writes an empty Lua table as [], but repos and package_repos are
+-- objects; this metatable makes ucl write them as {} even when empty
+local object = { class = "ucl.type.object" }
+
+-- The enabled repositories, as pkg prints them.
+local repos_ucl = run(pkg .. " repos -e")
+
+-- For 0.2.x servers: the URL of the first enabled repository. Read it
+-- from the text, which is in pkg order; the parsed table has no order.
+local repo = ""
+for line in repos_ucl:gmatch("[^\n]+") do
+  local url = line:match("^%s+url%s*:%s*\"([^\"]*)\"")
+  if url then
+    repo = url
+    break
+  end
+end
+
+-- All enabled repositories, converted from UCL.
+local repos = setmetatable({}, object)
+if repos_ucl:match("%S") then
+  local parser = ucl.parser()
+  local ok, err = parser:parse_string(repos_ucl)
+  if not ok then
+    die("cannot parse the output of pkg repos -e: " .. err)
+  end
+  repos = setmetatable(parser:get_object(), object)
+end
+
+-- The installed packages, and the same packages grouped by the
+-- repository each came from, from one pkg query.
+local packages, package_repos = {}, setmetatable({}, object)
+for r, p in run(pkg .. " query \"%R\t%n-%v\""):gmatch("([^\t\n]*)\t([^\n]*)") do
+  packages[#packages + 1] = p
+  package_repos[r] = package_repos[r] or {}
+  table.insert(package_repos[r], p)
+end
+table.sort(packages)
+for _, list in pairs(package_repos) do
+  table.sort(list)
+end
+
+-- Pretty-printed: samdrucker.php stores the payload as sent, and this
+-- keeps it readable in the database. The keys come out in no set order.
+print(ucl.to_format({
+  name          = os.getenv("SAMDRUCKER_NAME"),
+  os            = os.getenv("SAMDRUCKER_OS"),
+  version       = os.getenv("SAMDRUCKER_VERSION"),
+  repo          = repo,
+  repos         = repos,
+  packages      = packages,
+  package_repos = package_repos,
+}, "json"))
 '
 
 hostname=$(/bin/hostname)
 uname=$(/usr/bin/uname)
 version=$(/bin/freebsd-version)
-
-# The enabled repositories, as pkg prints them.
-repos_ucl=$($PKG repos -e)
-
-# For 0.2.x servers: the URL of the first enabled repository.
-repo=$(echo "$repos_ucl" | $GREP ' url ' | $HEAD -1 | $CUT -f2 -d \")
-
-# All enabled repositories, converted to JSON.
-repos=$(echo "$repos_ucl" | $FLUA -e "$REPO2JSON_LUA")
-if [ -z "$repos" ]; then
-  repos='{}'
-fi
-
-# The installed packages, grouped by the repository each came from.
-package_repos_args=""
-for r in $($PKG query '%R' | $SORT -u)
-do
-  package_repos_args="$package_repos_args $r=$($JO -a $($PKG query '%R %n-%v' | while read pr pv; do [ "$pr" = "$r" ] && echo "$pv"; done | $SORT))"
-done
-package_repos=$($JO $package_repos_args)
 
 # Report a failure: to stderr, which periodic(8) includes in the daily
 # mail, and to syslog. Then remove the payload and exit non-zero, so the
@@ -107,10 +148,10 @@ fail() {
 # we save this to a file; curl reads it from there
 payload=$(mktemp /tmp/SamDrucker.payload.XXXXXX) || fail "cannot create a temporary file"
 
-$JO -p name="$hostname" os="$uname" version="$version" repo="$repo" \
-       repos="$repos" \
-       packages="$($JO -a $($PKG info -q | $SORT))" \
-       package_repos="$package_repos" > $payload || fail "jo failed to build the JSON payload"
+lua_errors=$( { SAMDRUCKER_NAME="$hostname" SAMDRUCKER_OS="$uname" \
+                SAMDRUCKER_VERSION="$version" PKG="$PKG" \
+                $FLUA -e "$PAYLOAD_LUA" > "$payload"; } 2>&1 ) \
+  || fail "flua failed to build the JSON payload: $lua_errors"
 
 # Before 0.3.0 the sample configuration had "--output /dev/null" in
 # CURL_OPTIONS, which threw away the server's reply. We need the reply to
